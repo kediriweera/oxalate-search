@@ -414,6 +414,16 @@
     font-weight: 500;
   }
 
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
   /* ── Responsive ── */
   @media (max-width: 720px) {
     .sidebar { display: none; }
@@ -1316,5 +1326,8 @@ function render() {
 document.getElementById("searchInput").addEventListener("input", render);
 render();
 </script>
+
+<footer class="footer">v1.0.0</footer>
+
 </body>
 </html>
