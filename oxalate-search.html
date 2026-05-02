@@ -417,6 +417,81 @@
     font-weight: 500;
   }
 
+  /* ── Animations ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .card {
+    animation: fadeInUp 0.25s ease both;
+  }
+
+  .sidebar-card {
+    animation: slideInLeft 0.3s ease both;
+  }
+
+  .main-header { animation: fadeIn 0.4s ease both; }
+  .legend      { animation: fadeIn 0.5s ease both; }
+  .search-box  { animation: fadeIn 0.5s ease both; }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    animation: fadeIn 0.6s ease both;
+  }
+
+  .stat-pill-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .stat-pill-value {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-family: "Crimson Pro", Georgia, serif;
+  }
+
+  .stat-pill-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+
+  .stat-pill.very-high { border-color: #EDCECE; background: var(--red-soft); }
+  .stat-pill.high      { border-color: #EDD8C4; background: var(--orange-soft); }
+  .stat-pill.moderate  { border-color: #C4E4CE; background: var(--green-soft); }
+  .stat-pill.low       { border-color: #C4D8EE; background: var(--blue-soft); }
+
+  .stat-pill.very-high .stat-pill-value { color: var(--red); }
+  .stat-pill.high      .stat-pill-value { color: var(--orange); }
+  .stat-pill.moderate  .stat-pill-value { color: var(--green); }
+  .stat-pill.low       .stat-pill-value { color: var(--blue); }
+
   /* ── Footer ── */
   .footer {
     text-align: center;
@@ -465,6 +540,9 @@
       <div class="legend-item"><div class="dot dot-low"></div> Low &lt;25 mg</div>
     </div>
 
+    <!-- Stats bar -->
+    <div class="stats-bar" id="statsBar"></div>
+
     <div class="search-box">
       <span class="search-icon">🔍</span>
       <input type="text" id="searchInput" placeholder="Search foods, e.g. spinach, almonds, coffee…" autofocus>
@@ -474,7 +552,7 @@
     <div class="results-meta" id="resultsMeta"></div>
     <div class="results" id="results"></div>
 
-    <footer class="footer">v1.0.2</footer>
+    <footer class="footer">v1.1.0</footer>
   </div>
 
 </div>
@@ -1211,6 +1289,44 @@ function getLevel(oxalate) {
   return { label: "Low", cls: "low" };
 }
 
+// ── Build Stats Bar ──
+function buildStats() {
+  const veryHigh = FOODS.filter(f => f.oxalate >= 300).length;
+  const high     = FOODS.filter(f => f.oxalate >= 100 && f.oxalate < 300).length;
+  const moderate = FOODS.filter(f => f.oxalate >= 25  && f.oxalate < 100).length;
+  const low      = FOODS.filter(f => f.oxalate < 25).length;
+
+  document.getElementById("statsBar").innerHTML = `
+    <div class="stat-pill" style="animation-delay:0.1s">
+      <span class="stat-pill-icon">🗂️</span>
+      <span class="stat-pill-value">${FOODS.length}</span>
+      <span class="stat-pill-label">Total Foods</span>
+    </div>
+    <div class="stat-pill" style="animation-delay:0.15s">
+      <span class="stat-pill-icon">📂</span>
+      <span class="stat-pill-value">${[...new Set(FOODS.map(f => f.category))].length}</span>
+      <span class="stat-pill-label">Categories</span>
+    </div>
+    <div class="stat-pill very-high" style="animation-delay:0.2s">
+      <span class="stat-pill-value">${veryHigh}</span>
+      <span class="stat-pill-label">Very High</span>
+    </div>
+    <div class="stat-pill high" style="animation-delay:0.25s">
+      <span class="stat-pill-value">${high}</span>
+      <span class="stat-pill-label">High</span>
+    </div>
+    <div class="stat-pill moderate" style="animation-delay:0.3s">
+      <span class="stat-pill-value">${moderate}</span>
+      <span class="stat-pill-label">Moderate</span>
+    </div>
+    <div class="stat-pill low" style="animation-delay:0.35s">
+      <span class="stat-pill-value">${low}</span>
+      <span class="stat-pill-label">Low</span>
+    </div>
+  `;
+}
+buildStats();
+
 // ── Build Lowest 5 Sidebar ──
 function buildSidebar() {
   const lowest5 = [...FOODS]
@@ -1308,11 +1424,12 @@ function render() {
     return;
   }
 
-  resultsEl.innerHTML = filtered.map(food => {
+  resultsEl.innerHTML = filtered.map((food, i) => {
     const lvl = getLevel(food.oxalate);
     const displayName = highlight(food.name, query);
+    const delay = Math.min(i * 0.04, 0.5);
     return `
-      <div class="card ${lvl.cls}">
+      <div class="card ${lvl.cls}" style="animation-delay:${delay}s">
         <div class="card-left">
           <div class="food-name">${displayName}</div>
           <div class="food-meta">
