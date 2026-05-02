@@ -573,7 +573,7 @@
     <div class="results-meta" id="resultsMeta"></div>
     <div class="results" id="results"></div>
 
-    <footer class="footer">v1.3.1</footer>
+    <footer class="footer">v1.3.2</footer>
   </div>
 
 </div>
@@ -1420,24 +1420,181 @@ function updateFilters() {
 // ── Food Emoji Mapper ──
 function getFoodEmoji(name, category) {
   const n = name.toLowerCase();
+  const cat = category.toLowerCase();
 
-  // ── Baking (must come before broad powder/extract checks) ──
-  if (n.includes("baking powder"))   return "🧁";
-  if (n.includes("baking soda"))     return "🧁";
-  if (n.includes("cream of tartar")) return "🧁";
-  if (n.includes("pie crust"))       return "🥧";
-  if (n.includes("pie mix") || n.includes("pie fill")) return "🥧";
-  if (n.includes("malt powder") || n.includes("malt ")) return "🌾";
-  if (n.includes("corn starch") || n.includes("cornstarch")) return "🌽";
-  if (n.includes("cake mix") || n.includes("cake"))     return "🎂";
-  if (n.includes("brownie"))         return "🍫";
-  if (n.includes("gelatin"))         return "🍮";
-  if (n.includes("yeast"))           return "🍞";
-  if (n.includes("pectin"))          return "🍓";
-  if (n.includes("pudding"))         return "🍮";
-  if (n.includes("egg replacer"))    return "🥚";
+  // ── CATEGORY-FIRST ROUTING (prevents cross-category keyword conflicts) ──
 
-  // ── Vegetables ──
+  // Cereal: always 🥣 — avoids "corn","rice","cocoa","wheat" hitting other categories
+  if (cat === "cereal") return "🥣";
+
+  // Baking: specific then default 🧁
+  if (cat === "baking") {
+    if (n.includes("pie crust") || n.includes("pie mix") || n.includes("pie fill")) return "🥧";
+    if (n.includes("brownie"))         return "🍫";
+    if (n.includes("cake mix") || n.includes("cake")) return "🎂";
+    if (n.includes("gelatin"))         return "🍮";
+    if (n.includes("pudding"))         return "🍮";
+    if (n.includes("yeast"))           return "🍞";
+    if (n.includes("cornstarch") || n.includes("corn starch")) return "🌽";
+    if (n.includes("malt"))            return "🌾";
+    if (n.includes("egg replacer"))    return "🥚";
+    if (n.includes("pectin"))          return "🍓";
+    return "🧁";
+  }
+
+  // Supplements: drinks vs herbs vs pills
+  if (cat === "supplements") {
+    if (n.includes("boost") || n.includes("ensure") || n.includes("enteral") || n.includes("carnation")) return "🥤";
+    if (n.includes("aloe vera"))       return "🌿";
+    if (n.includes("wheat grass") || n.includes("barley life") || n.includes("spirulina") || n.includes("algae") || n.includes("kelp") || n.includes("moringa") || n.includes("yeast, nutritional")) return "🌿";
+    if (n.includes("beet powder") || n.includes("beet supplement")) return "🥗";
+    if (n.includes("brown rice"))      return "🌾";
+    if (n.includes("juice plus"))      return "🧃";
+    if (n.includes("metabolic"))       return "🧪";
+    if (n.includes("milk thistle"))    return "🌸";
+    return "💊";
+  }
+
+  // Restaurant: check salad before chicken to avoid "Chicken Salad" → 🍗
+  if (cat === "restaurant") {
+    if (n.includes("salad"))           return "🥗";
+    if (n.includes("fries") || n.includes("french fries")) return "🍟";
+    if (n.includes("burger") || n.includes("hamburger") || n.includes("junior")) return "🍔";
+    if (n.includes("mcmuffin") || n.includes("egg mcmuffin") || n.includes("sausage mcmuffin") || n.includes("sausage biscuit") || n.includes("bacon, egg")) return "🍔";
+    if (n.includes("tilapia") || n.includes("fish"))  return "🐟";
+    if (n.includes("chicken"))         return "🍗";
+    if (n.includes("steak") || n.includes("portobello")) return "🥩";
+    if (n.includes("chili"))           return "🍲";
+    if (n.includes("pizza"))           return "🍕";
+    if (n.includes("coffeecake") || n.includes("coffee cake")) return "🍰";
+    if (n.includes("latte") || n.includes("mocha") || n.includes("coffee")) return "☕";
+    if (n.includes("potato") || n.includes("herbed potato")) return "🥔";
+    if (n.includes("vegetable") || n.includes("broccoli") || n.includes("zucchini")) return "🥦";
+    if (n.includes("sandwich"))        return "🥪";
+    return "🍽️";
+  }
+
+  // Prepared foods
+  if (cat === "prepared foods") {
+    if (n.includes("soup"))            return "🍲";
+    if (n.includes("chili"))           return "🍲";
+    if (n.includes("pizza"))           return "🍕";
+    if (n.includes("ravioli"))         return "🍝";
+    if (n.includes("sauce") || n.includes("marinara") || n.includes("sloppy joe")) return "🫙";
+    if (n.includes("potato"))          return "🥔";
+    if (n.includes("stuffing"))        return "🍞";
+    if (n.includes("pie"))             return "🥧";
+    if (n.includes("burger") || n.includes("patty") || n.includes("morningstar") || n.includes("boca") || n.includes("garden burger") || n.includes("black bean")) return "🍔";
+    if (n.includes("lean cuisine") || n.includes("chicken")) return "🍗";
+    return "🥡";
+  }
+
+  // Snacks: check chocolate chip cookie before generic "chip"
+  if (cat === "snacks") {
+    if (n.includes("chocolate chip cookie")) return "🍪";
+    if (n.includes("cookie"))          return "🍪";
+    if (n.includes("brownie"))         return "🍫";
+    if (n.includes("ice cream"))       return "🍦";
+    if (n.includes("pretzel"))         return "🥨";
+    if (n.includes("cracker"))         return "🫓";
+    if (n.includes("popcorn") || n.includes("popcorn chip")) return "🍿";
+    if (n.includes("chip"))            return "🥔";
+    if (n.includes("bar,") || n.startsWith("bars,") || n.includes("granola bar")) return "🍫";
+    if (n.includes("nutella"))         return "🍫";
+    if (n.includes("breakfast sandwich") || n.includes("eggwich")) return "🍔";
+    if (n.includes("breakfast biscuit")) return "🍞";
+    if (n.includes("basil wrap"))      return "🌯";
+    return "🍿";
+  }
+
+  // Sweets: check chocolate syrup before generic syrup
+  if (cat === "sweets") {
+    if (n.includes("chocolate syrup")) return "🍫";
+    if (n.includes("cocoa") || n.includes("cacao") || n.includes("dark chocolate") || n.includes("milk chocolate") || n.includes("white chocolate") || n.includes("chocolate bar") || n.includes("truffle")) return "🍫";
+    if (n.includes("candy") || n.includes("m&m") || n.includes("3 musketeers")) return "🍬";
+    if (n.includes("cookie"))          return "🍪";
+    if (n.includes("brownie"))         return "🍫";
+    if (n.includes("ice cream"))       return "🍦";
+    if (n.includes("honey"))           return "🍯";
+    if (n.includes("jam") || n.includes("jelly") || n.includes("preserve") || n.includes("marmalade")) return "🫙";
+    if (n.includes("syrup") || n.includes("molasses") || n.includes("agave")) return "🍯";
+    if (n.includes("sugar") || n.includes("stevia") || n.includes("sweetener") || n.includes("aspartame") || n.includes("saccharin") || n.includes("splenda") || n.includes("swerve")) return "🍬";
+    return "🍬";
+  }
+
+  // Condiments
+  if (cat === "condiments") {
+    if (n.includes("ketchup"))         return "🍅";
+    if (n.includes("mustard"))         return "🫙";
+    if (n.includes("mayonnaise"))      return "🫙";
+    if (n.includes("barbecue"))        return "🫙";
+    if (n.includes("soy sauce"))       return "🫙";
+    if (n.includes("tahini"))          return "🫙";
+    if (n.includes("mole"))            return "🫙";
+    if (n.includes("salad dressing"))  return "🥗";
+    if (n.includes("pickles") || n.includes("pickle")) return "🥒";
+    if (n.includes("horseradish"))     return "🫙";
+    if (n.includes("tabasco"))         return "🌶️";
+    if (n.includes("chili") || n.includes("chile")) return "🌶️";
+    if (n.includes("chutney"))         return "🫙";
+    if (n.includes("adobo"))           return "🫙";
+    return "🫙";
+  }
+
+  // Herbs & Spices
+  if (cat === "herbs & spices") {
+    if (n.includes("salt"))            return "🧂";
+    if (n.includes("pepper") || n.includes("chili") || n.includes("chile") || n.includes("cayenne") || n.includes("habanero") || n.includes("jalapeno") || n.includes("serrano") || n.includes("tabasco pepper") || n.includes("pasilla") || n.includes("chipotle") || n.includes("anaheim")) return "🌶️";
+    if (n.includes("cinnamon"))        return "🍂";
+    if (n.includes("turmeric"))        return "🟡";
+    if (n.includes("ginger"))          return "🫚";
+    if (n.includes("vanilla") || n.includes("almond extract") || n.includes("lemon extract") || n.includes("orange extract") || n.includes("maple flavoring")) return "🍶";
+    if (n.includes("garlic"))          return "🧄";
+    if (n.includes("onion powder"))    return "🧅";
+    if (n.includes("miso"))            return "🍶";
+    if (n.includes("capers"))          return "🫙";
+    if (n.includes("seeds, sesame") || n.includes("seeds, poppy") || n.includes("seeds, caraway") || n.includes("seeds, mustard")) return "🌻";
+    if (n.includes("lemon peel") || n.includes("orange peel") || n.includes("lemon balm") || n.includes("lemon myrtle")) return "🍋";
+    if (n.includes("fennel seed"))     return "🌿";
+    if (n.includes("celery seed"))     return "🥬";
+    if (n.includes("coating mix") || n.includes("shake n bake") || n.includes("mrs. dash") || n.includes("poultry seasoning") || n.includes("italian seasoning") || n.includes("mesquite") || n.includes("lawry")) return "🌿";
+    return "🌿";
+  }
+
+  // Beverages
+  if (cat === "beverages") {
+    if (n.includes("beer") || n.includes("hard cider") || n.includes("seltzer")) return "🍺";
+    if (n.includes("wine"))            return "🍷";
+    if (n.includes("distilled") || n.includes("spirit") || n.includes("gin") || n.includes("vodka") || n.includes("whiskey") || n.includes("rum") || n.includes("brandy") || n.includes("liqueur")) return "🥃";
+    if (n.includes("coffee") || n.includes("cappuccino") || n.includes("latte") || n.includes("mocha") || n.includes("frappuccino")) return "☕";
+    if (n.includes("hot chocolate") || n.includes("ovaltine")) return "☕";
+    if (n.includes("tea"))             return "🍵";
+    if (n.includes("juice"))           return "🧃";
+    if (n.includes("coconut water"))   return "🥥";
+    if (n.includes("soda"))            return "🥤";
+    return "🥤";
+  }
+
+  // Dairy
+  if (cat === "dairy") {
+    if (n.includes("yogurt"))          return "🥛";
+    if (n.includes("cheese"))          return "🧀";
+    if (n.includes("milk"))            return "🥛";
+    if (n.includes("butter") || n.includes("cream") || n.includes("margarine")) return "🧈";
+    return "🥛";
+  }
+
+  // Protein: check in order
+  if (cat === "protein") {
+    if (n.includes("tofu") || n.includes("tempeh") || n.includes("bean") || n.includes("legume") || n.includes("lentil") || n.includes("chickpea") || n.includes("edamame") || n.includes("refried") || n.includes("tvp") || n.includes("textured") || n.includes("seitan")) return "🫘";
+    if (n.includes("pea") && !n.includes("peanut")) return "🫛";
+    if (n.includes("almond") || n.includes("cashew") || n.includes("walnut") || n.includes("pecan") || n.includes("hazelnut") || n.includes("brazil") || n.includes("macadamia") || n.includes("pine nut") || n.includes("pistachio") || n.includes("chestnut") || n.includes("peanut") || n.includes("soynuts") || n.includes("soy nut")) return "🥜";
+    if (n.includes("chia") || n.includes("flax") || n.includes("hemp") || n.includes("sesame") || n.includes("sunflower") || n.includes("pumpkin seed") || n.includes("poppy") || n.includes("caraway") || n.includes("saviseed") || n.includes("wattle") || n.includes("watermelon")) return "🌻";
+    if (n.includes("sprout"))          return "🌱";
+    return "🥜";
+  }
+
+  // ── Vegetable / Fruit / Grains keyword checks ──
   if (n.includes("spinach"))         return "🥬";
   if (n.includes("swiss chard"))     return "🥬";
   if (n.includes("kale"))            return "🥬";
@@ -1526,113 +1683,6 @@ function getFoodEmoji(name, category) {
   if (n.includes("grain") || n.includes("quinoa") || n.includes("barley") || n.includes("millet") || n.includes("farro") || n.includes("buckwheat") || n.includes("sorghum") || n.includes("amaranth") || n.includes("teff") || n.includes("seitan") || n.includes("wheat berr") || n.includes("wheat germ") || n.includes("wheat gluten") || n.includes("bulger") || n.includes("polenta")) return "🌾";
   if (n.includes("rice"))            return "🍚";
 
-  // ── Cereals ──
-  if (n.includes("cheerio") || n.includes("chex") || n.includes("bran flake") || n.includes("corn flake") || n.includes("granola") || n.includes("raisin bran") || n.includes("shredded wheat") || n.includes("grape nut") || n.includes("muesli") || n.includes("special k") || n.includes("wheaties") || n.includes("lucky charm") || n.includes("frosted") || n.includes("cocoa puff") || n.includes("cap'n") || n.includes("kashi") || n.includes("puffed") || n.includes("weetabix") || n.includes("fiber one") || n.includes("smart start") || n.includes("uncle sam") || n.includes("total,") || n.includes("cream of wheat") || n.includes("oatmeal squares") || n.includes("honey bunches") || n.includes("honey toasted") || n.includes("40% bran")) return "🥣";
-
-  // ── Protein / Nuts / Seeds ──
-  if (n.includes("bean") || n.includes("legume") || n.includes("lentil") || n.includes("chickpea") || n.includes("tofu") || n.includes("tempeh") || n.includes("refried") || n.includes("tvp") || n.includes("textured")) return "🫘";
-  if (n.includes("almond"))          return "🥜";
-  if (n.includes("cashew"))          return "🥜";
-  if (n.includes("walnut") || n.includes("pecan") || n.includes("hazelnut") || n.includes("brazil nut") || n.includes("macadamia") || n.includes("pine nut") || n.includes("pistachio") || n.includes("chestnut")) return "🥜";
-  if (n.includes("peanut butter") || n.includes("peanuts") || n.includes("soy nut") || n.includes("soynuts")) return "🥜";
-  if (n.includes("chia") || n.includes("flax") || n.includes("hemp hearts") || n.includes("sesame") || n.includes("sunflower seed") || n.includes("pumpkin seed") || n.includes("poppy") || n.includes("caraway") || n.includes("wattle") || n.includes("saviseed") || n.includes("mustard seed") || n.includes("papaya seed")) return "🌻";
-
-  // ── Beverages ──
-  if (n.includes("coffee") || n.includes("cappuccino") || n.includes("latte") || n.includes("mocha") || n.includes("frappuccino")) return "☕";
-  if (n.includes("tea"))             return "🍵";
-  if (n.includes("juice"))           return "🧃";
-  if (n.includes("coconut water"))   return "🥥";
-  if (n.includes("soda") || n.includes("hard cider") || n.includes("seltzer")) return "🥤";
-  if (n.includes("beer"))            return "🍺";
-  if (n.includes("wine"))            return "🍷";
-  if (n.includes("distilled") || n.includes("spirit") || n.includes("gin") || n.includes("vodka") || n.includes("whiskey") || n.includes("rum") || n.includes("brandy") || n.includes("liqueur")) return "🥃";
-  if (n.includes("hot chocolate") || n.includes("ovaltine")) return "☕";
-  if (n.includes("boost breeze") || n.includes("ensure") || n.includes("enteral") || n.includes("carnation")) return "🧴";
-
-  // ── Sweets ──
-  if (n.includes("hot chocolate") || n.includes("cocoa") || n.includes("cacao")) return "🍫";
-  if (n.includes("dark chocolate") || n.includes("milk chocolate") || n.includes("white chocolate") || n.includes("chocolate bar") || n.includes("truffle") || n.includes("nutella")) return "🍫";
-  if (n.includes("candy") || n.includes("m&m") || n.includes("3 musketeers")) return "🍬";
-  if (n.includes("cookie"))          return "🍪";
-  if (n.includes("brownie"))         return "🍫";
-  if (n.includes("ice cream") || n.includes("klondike")) return "🍦";
-  if (n.includes("honey"))           return "🍯";
-  if (n.includes("maple syrup") || n.includes("corn syrup") || n.includes("brown rice syrup") || n.includes("barley malt") || n.includes("elderberry syrup") || n.includes("syrup")) return "🍯";
-  if (n.includes("chocolate syrup")) return "🍫";
-  if (n.includes("jam") || n.includes("jelly") || n.includes("preserve") || n.includes("marmalade")) return "🫙";
-  if (n.includes("sugar") || n.includes("molasses") || n.includes("agave") || n.includes("stevia") || n.includes("sweetener") || n.includes("aspartame") || n.includes("saccharin") || n.includes("splenda") || n.includes("swerve")) return "🍬";
-  if (n.includes("fudge brownie mix")) return "🍫";
-
-  // ── Condiments / Sauces ──
-  if (n.includes("ketchup"))         return "🍅";
-  if (n.includes("mustard"))         return "🫙";
-  if (n.includes("mayonnaise") || n.includes("mayo")) return "🫙";
-  if (n.includes("barbecue") || n.includes("bbq")) return "🫙";
-  if (n.includes("soy sauce"))       return "🫙";
-  if (n.includes("tahini"))          return "🫙";
-  if (n.includes("mole"))            return "🫙";
-  if (n.includes("salad dressing"))  return "🥗";
-  if (n.includes("sauce") || n.includes("vinegar") || n.includes("worcester") || n.includes("tabasco") || n.includes("horseradish") || n.includes("chutney") || n.includes("adobo") || n.includes("steak sauce") || n.includes("pickles") || n.includes("pickle")) return "🫙";
-
-  // ── Herbs & Spices ──
-  if (n.includes("cinnamon"))        return "🍂";
-  if (n.includes("turmeric"))        return "🟡";
-  if (n.includes("ginger"))          return "🫚";
-  if (n.includes("vanilla extract") || n.includes("almond extract") || n.includes("lemon extract") || n.includes("orange extract") || n.includes("maple flavoring")) return "🍶";
-  if (n.includes("salt"))            return "🧂";
-  if (n.includes("miso"))            return "🍶";
-  if (n.includes("basil") || n.includes("oregano") || n.includes("thyme") || n.includes("rosemary") || n.includes("parsley") || n.includes("cilantro") || n.includes("dill") || n.includes("sage") || n.includes("tarragon") || n.includes("marjoram") || n.includes("chives") || n.includes("lemon balm") || n.includes("lemon myrtle") || n.includes("peppermint") || n.includes("savory")) return "🌿";
-  if (n.includes("cumin") || n.includes("curry") || n.includes("paprika") || n.includes("allspice") || n.includes("anise") || n.includes("cardamom") || n.includes("clove") || n.includes("nutmeg") || n.includes("saffron") || n.includes("coriander") || n.includes("fennel seed") || n.includes("celery seed") || n.includes("mace") || n.includes("poultry seasoning") || n.includes("italian seasoning") || n.includes("mrs. dash") || n.includes("chili powder") || n.includes("shake n bake") || n.includes("mesquite") || n.includes("lemon peel") || n.includes("orange peel") || n.includes("mountain pepper")) return "🌿";
-  if (n.includes("capers"))          return "🫙";
-
-  // ── Snacks ──
-  if (n.includes("chip") && !n.includes("chocolate chip")) return "🥔";
-  if (n.includes("cracker"))         return "🫓";
-  if (n.includes("pretzel"))         return "🥨";
-  if (n.includes("bar,") || n.includes("bar ") || (n.startsWith("bars,"))) return "🍫";
-  if (n.includes("breakfast biscuit") || n.includes("breakfast sandwich")) return "🍔";
-  if (n.includes("basil wrap"))      return "🌯";
-
-  // ── Restaurant / Fast food ──
-  if (n.includes("french fries") || n.includes("fries")) return "🍟";
-  if (n.includes("burger") || n.includes("hamburger") || n.includes("mcmuffin") || n.includes("egg mcmuffin") || n.includes("sausage biscuit") || n.includes("sausage mcmuffin") || n.includes("bacon, egg")) return "🍔";
-  if (n.includes("pizza"))           return "🍕";
-  if (n.includes("coffeecake") || n.includes("starbucks")) return "☕";
-  if (n.includes("caesar salad"))    return "🥗";
-  if (n.includes("chili"))           return "🍲";
-  if (n.includes("tilapia") || n.includes("fish")) return "🐟";
-  if (n.includes("chicken"))         return "🍗";
-
-  // ── Prepared / Frozen ──
-  if (n.includes("soup"))            return "🍲";
-  if (n.includes("lean cuisine") || n.includes("frozen meal")) return "🥡";
-  if (n.includes("morningstar") || n.includes("boca") || n.includes("garden burger") || n.includes("meat substitute") || n.includes("black bean patty")) return "🫘";
-  if (n.includes("stuffing"))        return "🍞";
-  if (n.includes("potato flakes"))   return "🥔";
-  if (n.includes("pasta sauce") || n.includes("marinara") || n.includes("sloppy joe")) return "🫙";
-  if (n.includes("15 bean"))         return "🫘";
-
-  // ── Supplements (last — only actual supplements) ──
-  if (n.includes("ashwagandha") || n.includes("ginkgo") || n.includes("milk thistle") || n.includes("valerian") || n.includes("echinacea") || n.includes("aloe vera") || n.includes("maca") || n.includes("moringa") || n.includes("slippery elm") || n.includes("st. john") || n.includes("feverfew") || n.includes("goldenseal") || n.includes("rhodiola") || n.includes("pycnogenol") || n.includes("berberine") || n.includes("boswella") || n.includes("curcumin") || n.includes("lutein") || n.includes("grape seed") || n.includes("muscadine") || n.includes("black cohosh") || n.includes("hawthorn") || n.includes("licorice") || n.includes("yellow dock") || n.includes("willow bark") || n.includes("wheat grass") || n.includes("spirulina") || n.includes("barley life") || n.includes("balance of nature") || n.includes("adrenasense") || n.includes("metabolic") || n.includes("juice plus") || n.includes("kelp") || n.includes("algae") || n.includes("beet powder") || n.includes("beet supplement") || n.includes("brown rice isolate") || n.includes("multivitamin") || n.includes("centrum") || n.includes("soy, ultra") || n.includes("reacted iron") || n.includes("glucosamine") || n.includes("coq-10") || n.includes("c-q-10") || n.includes("dim ") || n.includes("senokot") || n.includes("intestamine")) return "💊";
-  if (n.includes("capsule") || n.includes("softgel") || n.includes("caplet") || n.includes("tablet") || n.includes("gel cap")) return "💊";
-
-  // ── Category fallbacks ──
-  const cat = category.toLowerCase();
-  if (cat === "vegetable")      return "🥦";
-  if (cat === "fruit")          return "🍎";
-  if (cat === "dairy")          return "🥛";
-  if (cat === "grains")         return "🌾";
-  if (cat === "protein")        return "🥩";
-  if (cat === "beverages")      return "🥤";
-  if (cat === "sweets")         return "🍬";
-  if (cat === "condiments")     return "🫙";
-  if (cat === "herbs & spices") return "🌿";
-  if (cat === "baking")         return "🧁";
-  if (cat === "snacks")         return "🍿";
-  if (cat === "cereal")         return "🥣";
-  if (cat === "restaurant")     return "🍽️";
-  if (cat === "prepared foods") return "🥡";
-  if (cat === "supplements")    return "💊";
   return "🍽️";
 }
 
