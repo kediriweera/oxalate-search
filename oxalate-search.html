@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oxalate Food Search</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f7fa;
+    color: #2d3748;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #2b6cb0, #3182ce);
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; }
+  header p { margin-top: 6px; opacity: 0.85; font-size: 0.95rem; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: #ebf4ff;
+    border-bottom: 1px solid #bee3f8;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
+  .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-very-high { background: #fc8181; }
+  .dot-high      { background: #f6ad55; }
+  .dot-moderate  { background: #68d391; }
+  .dot-low       { background: #63b3ed; }
+
+  .search-wrap {
+    max-width: 680px;
+    margin: 28px auto 0;
+    padding: 0 16px;
+  }
+
+  .search-box {
+    position: relative;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 14px 20px 14px 48px;
+    font-size: 1.05rem;
+    border: 2px solid #bee3f8;
+    border-radius: 12px;
+    background: white;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+
+  .search-box input:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    pointer-events: none;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid #bee3f8;
+    background: white;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #4a5568;
+  }
+
+  .filter-btn:hover { background: #ebf4ff; }
+  .filter-btn.active {
+    background: #3182ce;
+    border-color: #3182ce;
+    color: white;
+  }
+
+  .results-meta {
+    max-width: 680px;
+    margin: 14px auto 0;
+    padding: 0 16px;
+    font-size: 0.85rem;
+    color: #718096;
+  }
+
+  .results {
+    max-width: 680px;
+    margin: 10px auto 40px;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-left: 4px solid transparent;
+    transition: box-shadow 0.15s;
+  }
+
+  .card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+
+  .card.very-high { border-left-color: #fc8181; }
+  .card.high      { border-left-color: #f6ad55; }
+  .card.moderate  { border-left-color: #68d391; }
+  .card.low       { border-left-color: #63b3ed; }
+
+  .card-left { min-width: 0; }
+
+  .food-name {
+    font-weight: 600;
+    font-size: 0.97rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .food-meta {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-top: 3px;
+  }
+
+  .card-right { text-align: right; flex-shrink: 0; }
+
+  .oxalate-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .card.very-high .oxalate-value { color: #e53e3e; }
+  .card.high      .oxalate-value { color: #dd6b20; }
+  .card.moderate  .oxalate-value { color: #276749; }
+  .card.low       .oxalate-value { color: #2b6cb0; }
+
+  .oxalate-label {
+    font-size: 0.73rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  .card.very-high .oxalate-label { color: #fc8181; }
+  .card.high      .oxalate-label { color: #f6ad55; }
+  .card.moderate  .oxalate-label { color: #68d391; }
+  .card.low       .oxalate-label { color: #63b3ed; }
+
+  .no-results {
+    text-align: center;
+    padding: 48px 20px;
+    color: #a0aec0;
+    font-size: 1rem;
+  }
+
+  .no-results span { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+
+  mark {
+    background: #fefcbf;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  .category-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    background: #edf2f7;
+    color: #4a5568;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 4px;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Oxalate Food Search</h1>
+  <p>Search any food to find its oxalate content &mdash; Mayo Clinic 2025</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot dot-very-high"></div> Very High (&ge;300 mg)</div>
+  <div class="legend-item"><div class="dot dot-high"></div> High (100&ndash;299 mg)</div>
+  <div class="legend-item"><div class="dot dot-moderate"></div> Moderate (25&ndash;99 mg)</div>
+  <div class="legend-item"><div class="dot dot-low"></div> Low (&lt;25 mg)</div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search foods, e.g. spinach, almonds, coffee..." autofocus>
+  </div>
+  <div class="filters" id="filters"></div>
+</div>
+
+<div class="results-meta" id="resultsMeta"></div>
+<div class="results" id="results"></div>
+
+<script>
+const FOODS = [
+  // ── Vegetables ──
+  { name: "Artichoke, boiled", serving: "½ cup", oxalate: 11, category: "Vegetable" },
+  { name: "Arugula, raw", serving: "1 cup", oxalate: 1, category: "Vegetable" },
+  { name: "Asparagus, boiled or steamed and drained", serving: "½ cup", oxalate: 5, category: "Vegetable" },
+  { name: "Bamboo Shoots, canned and drained", serving: "1 cup", oxalate: 35, category: "Vegetable" },
+  { name: "Beans, green (variety), boiled or steamed", serving: "½ cup", oxalate: 15, category: "Vegetable" },
+  { name: "Beans, string, boiled or canned", serving: "½ cup", oxalate: 8, category: "Vegetable" },
+  { name: "Beets, boiled, steamed or pickled", serving: "½ cup", oxalate: 48, category: "Vegetable" },
+  { name: "Bok Choy, leaves, stalks diced", serving: "1 cup", oxalate: 3, category: "Vegetable" },
+  { name: "Broccoli, boiled or steamed", serving: "½ cup", oxalate: 4, category: "Vegetable" },
+  { name: "Broccoli, rabe, raw", serving: "1 cup", oxalate: 6, category: "Vegetable" },
+  { name: "Broccoli, rabe, steamed at least 8 min", serving: "½ cup", oxalate: 5, category: "Vegetable" },
+  { name: "Broccolini, steamed for 10 min", serving: "½ cup", oxalate: 11, category: "Vegetable" },
+  { name: "Brussel Sprouts, boiled or steamed", serving: "½ cup", oxalate: 3, category: "Vegetable" },
+  { name: "Brussel Sprouts, raw", serving: "1 cup", oxalate: 14, category: "Vegetable" },
+  { name: "Cabbage, green boiled or steamed", serving: "½ cup", oxalate: 3, category: "Vegetable" },
+  { name: "Cabbage, green, raw, shredded", serving: "1 cup", oxalate: 4, category: "Vegetable" },
+  { name: "Carrots, boiled, steamed", serving: "½ cup", oxalate: 9, category: "Vegetable" },
+  { name: "Carrots, raw", serving: "1 cup, grated", oxalate: 30, category: "Vegetable" },
+  { name: "Cauliflower, raw, boiled or steamed", serving: "½ cup", oxalate: 2, category: "Vegetable" },
+  { name: "Celeriac, canned", serving: "½ cup", oxalate: 5, category: "Vegetable" },
+  { name: "Celery, raw, stem only, diced", serving: "1 cup", oxalate: 30, category: "Vegetable" },
+  { name: "Collards, raw, chopped", serving: "1 cup", oxalate: 6, category: "Vegetable" },
+  { name: "Collards, boiled or steamed", serving: "½ cup", oxalate: 21, category: "Vegetable" },
+  { name: "Corn, sweet, boiled or canned", serving: "½ cup", oxalate: 2, category: "Vegetable" },
+  { name: "Cucumbers (variety), with or without skin", serving: "1 cup", oxalate: 5, category: "Vegetable" },
+  { name: "Dandelion greens, red rib, raw or boiled", serving: "½ cup", oxalate: 10, category: "Vegetable" },
+  { name: "Eggplant, raw, boiled, baked", serving: "½ cup", oxalate: 26, category: "Vegetable" },
+  { name: "Endive, Belgian or Curly, raw", serving: "1 cup", oxalate: 3, category: "Vegetable" },
+  { name: "Escarole, raw", serving: "1 cup", oxalate: 2, category: "Vegetable" },
+  { name: "Fennel, boiled", serving: "1 bulb", oxalate: 12, category: "Vegetable" },
+  { name: "Grape leaves, canned in vinegar brine, Krinos", serving: "1 leaf", oxalate: 7, category: "Vegetable" },
+  { name: "Greens, Turnip, boiled 6 min", serving: "½ cup", oxalate: 5, category: "Vegetable" },
+  { name: "Greens, Pea", serving: "½ cup", oxalate: 19, category: "Vegetable" },
+  { name: "Greens, Mustard, boiled or steamed", serving: "½ cup", oxalate: 5, category: "Vegetable" },
+  { name: "Hearts of Palm, Haddon house brand", serving: "½ cup", oxalate: 30, category: "Vegetable" },
+  { name: "Huazontle (Aztec Broccoli)", serving: "½ cup", oxalate: 263, category: "Vegetable" },
+  { name: "Jicama, peeled, raw", serving: "1 cup", oxalate: 13, category: "Vegetable" },
+  { name: "Kale, (variety), raw, boiled or steamed", serving: "½ cup", oxalate: 3, category: "Vegetable" },
+  { name: "Kohlrabi", serving: "1 cup", oxalate: 1, category: "Vegetable" },
+  { name: "Leeks, raw", serving: "1 cup", oxalate: 15, category: "Vegetable" },
+  { name: "Lettuces, (variety), raw", serving: "1 cup", oxalate: 3, category: "Vegetable" },
+  { name: "Mushrooms, (variety), boiled or canned", serving: "½ cup", oxalate: 1, category: "Vegetable" },
+  { name: "Mushrooms, (variety), dried", serving: "1/3 cup", oxalate: 4, category: "Vegetable" },
+  { name: "Nopal (prickly pear), cooked", serving: "½ cup", oxalate: 87, category: "Vegetable" },
+  { name: "Nopal (prickly pear), raw", serving: "1 cup", oxalate: 226, category: "Vegetable" },
+  { name: "Okra, boiled for 5 min", serving: "½ cup", oxalate: 56, category: "Vegetable" },
+  { name: "Onion, (variety), boiled or sauteed", serving: "½ cup", oxalate: 4, category: "Vegetable" },
+  { name: "Onion, raw", serving: "1 cup", oxalate: 6, category: "Vegetable" },
+  { name: "Parsnips, boiled for 12 min", serving: "½ cup", oxalate: 15, category: "Vegetable" },
+  { name: "Peas, snow, whole, fresh", serving: "½ cup", oxalate: 20, category: "Vegetable" },
+  { name: "Pepper, sweet and hot, cooked", serving: "½ cup", oxalate: 15, category: "Vegetable" },
+  { name: "Pepper, sweet and hot, raw", serving: "½ cup", oxalate: 11, category: "Vegetable" },
+  { name: "Potato, New with skin, boiled 30 min", serving: "½ cup", oxalate: 16, category: "Vegetable" },
+  { name: "Potato, Red/New without skin, boiled no skin", serving: "½ cup", oxalate: 10, category: "Vegetable" },
+  { name: "Potato, Russet, baked with skin", serving: "½ cup", oxalate: 29, category: "Vegetable" },
+  { name: "Potato, Russet, boiled with or without skin", serving: "½ cup", oxalate: 18, category: "Vegetable" },
+  { name: "Potato, White and Sweet, fried", serving: "½ cup", oxalate: 36, category: "Vegetable" },
+  { name: "Potato, White, instant, mashed", serving: "½ cup", oxalate: 15, category: "Vegetable" },
+  { name: "Potato, Fingerling, white or red, boiled", serving: "½ cup", oxalate: 32, category: "Vegetable" },
+  { name: "Potatoes, hash browns", serving: "½ cup", oxalate: 20, category: "Vegetable" },
+  { name: "Potato, Sweet, orange, baked/boiled/canned-no skin", serving: "½ cup mashed", oxalate: 56, category: "Vegetable" },
+  { name: "Pumpkin, canned", serving: "½ cup", oxalate: 7, category: "Vegetable" },
+  { name: "Purslane, leaves", serving: "1 cup", oxalate: 248, category: "Vegetable" },
+  { name: "Radicchio, raw", serving: "½ cup", oxalate: 1, category: "Vegetable" },
+  { name: "Radish, White, Red, Daikon, raw", serving: "1 cup", oxalate: 1, category: "Vegetable" },
+  { name: "Rutabaga, boiled or pressure cooked", serving: "½ cup", oxalate: 4, category: "Vegetable" },
+  { name: "Seaweed, Dulse flakes", serving: "1 Tbsp", oxalate: 14, category: "Vegetable" },
+  { name: "Seaweed, Kombu", serving: "1x4 inch pc", oxalate: 0, category: "Vegetable" },
+  { name: "Seaweed, Nori, dry roasted", serving: "½ cup", oxalate: 10, category: "Vegetable" },
+  { name: "Seaweed, Wakame", serving: "½ cup", oxalate: 0, category: "Vegetable" },
+  { name: "Shallots", serving: "½ cup", oxalate: 1, category: "Vegetable" },
+  { name: "Sorrel, boiled 15 min", serving: "½ cup", oxalate: 303, category: "Vegetable" },
+  { name: "Sorrel, raw", serving: "1 cup", oxalate: 405, category: "Vegetable" },
+  { name: "Spinach, fresh, raw", serving: "1 cup", oxalate: 316, category: "Vegetable" },
+  { name: "Spinach, fresh or frozen, boiled or steamed", serving: "½ cup", oxalate: 493, category: "Vegetable" },
+  { name: "Sprouts, mung bean", serving: "½ cup", oxalate: 4, category: "Vegetable" },
+  { name: "Sprouts, alfalfa", serving: "½ cup", oxalate: 1, category: "Vegetable" },
+  { name: "Squash, Winter & Summer, baked or boiled", serving: "½ cup", oxalate: 4, category: "Vegetable" },
+  { name: "Squash, Winter & Summer, raw", serving: "1 cup", oxalate: 6, category: "Vegetable" },
+  { name: "Swiss Chard, green, boiled", serving: "½ cup", oxalate: 293, category: "Vegetable" },
+  { name: "Swiss Chard, green, raw", serving: "1 cup", oxalate: 237, category: "Vegetable" },
+  { name: "Swiss Chard, red, boiled or steamed", serving: "½ cup", oxalate: 594, category: "Vegetable" },
+  { name: "Swiss Chard, red, raw", serving: "1 cup", oxalate: 420, category: "Vegetable" },
+  { name: "Tomatillo, raw", serving: "1 medium", oxalate: 7, category: "Vegetable" },
+  { name: "Tomato, all colors and varieties, raw", serving: "1 cup", oxalate: 17, category: "Vegetable" },
+  { name: "Tomatoes, canned", serving: "½ cup", oxalate: 11, category: "Vegetable" },
+  { name: "Tomato, Paste, Hunt's", serving: "1 tbsp", oxalate: 3, category: "Vegetable" },
+  { name: "Turnip, boiled, steamed or raw", serving: "½ cup", oxalate: 2, category: "Vegetable" },
+  { name: "Water Chestnuts, canned, sliced", serving: "½ cup", oxalate: 1, category: "Vegetable" },
+  { name: "Water cress, raw", serving: "1 cup", oxalate: 4, category: "Vegetable" },
+  { name: "Yam, no skin, baked", serving: "½ cup", oxalate: 68, category: "Vegetable" },
+
+  // ── Fruit ──
+  { name: "Apple, apple puree", serving: "½ cup", oxalate: 5, category: "Fruit" },
+  { name: "Apple, (variety), fresh", serving: "1 medium", oxalate: 2, category: "Fruit" },
+  { name: "Apple, dried", serving: "¼ cup", oxalate: 0, category: "Fruit" },
+  { name: "Apricots, dried", serving: "½ apricot x 4", oxalate: 12, category: "Fruit" },
+  { name: "Apricot, fresh", serving: "1 cup", oxalate: 20, category: "Fruit" },
+  { name: "Avocado, fresh", serving: "½ cup", oxalate: 7, category: "Fruit" },
+  { name: "Bananas, fresh", serving: "1 medium", oxalate: 6, category: "Fruit" },
+  { name: "Berries, blackberries, fresh", serving: "1 cup", oxalate: 45, category: "Fruit" },
+  { name: "Berries, Blueberries, fresh or frozen", serving: "1 cup", oxalate: 27, category: "Fruit" },
+  { name: "Berries, Cranberries, dried", serving: "¼ cup", oxalate: 1, category: "Fruit" },
+  { name: "Berries, Elderberries, dried", serving: "2 Tbsp", oxalate: 51, category: "Fruit" },
+  { name: "Berries, Elderberries, raw, black", serving: "1 cup", oxalate: 105, category: "Fruit" },
+  { name: "Berries, Gooseberries, raw, red and green", serving: "1 cup", oxalate: 33, category: "Fruit" },
+  { name: "Berries, Huckleberries, fresh", serving: "½ cup", oxalate: 39, category: "Fruit" },
+  { name: "Berries, Raspberries", serving: "1 cup", oxalate: 21, category: "Fruit" },
+  { name: "Berries, Strawberries, canned", serving: "½ cup", oxalate: 20, category: "Fruit" },
+  { name: "Berries, Strawberries, fresh", serving: "1 cup, sliced", oxalate: 6, category: "Fruit" },
+  { name: "Cherries, Bing, canned", serving: "½ cup", oxalate: 6, category: "Fruit" },
+  { name: "Cherries, dried", serving: "¼ cup", oxalate: 3, category: "Fruit" },
+  { name: "Cherries, Sweet, raw", serving: "1 cup", oxalate: 2, category: "Fruit" },
+  { name: "Currents, Black, raw", serving: "1 cup", oxalate: 21, category: "Fruit" },
+  { name: "Currents, Red, raw", serving: "1 cup", oxalate: 22, category: "Fruit" },
+  { name: "Dates, chopped", serving: "¼ cup", oxalate: 4, category: "Fruit" },
+  { name: "Figs, dried", serving: "1 fig", oxalate: 6, category: "Fruit" },
+  { name: "Figs, fresh", serving: "1 medium fig", oxalate: 15, category: "Fruit" },
+  { name: "Fruit cocktail, drained", serving: "½ cup", oxalate: 6, category: "Fruit" },
+  { name: "Grapefruit, white and pink", serving: "½ of 3¼\" diameter", oxalate: 13, category: "Fruit" },
+  { name: "Grapes, red or green, raisins", serving: "¼ cup", oxalate: 6, category: "Fruit" },
+  { name: "Grapes, Red or Green, fresh", serving: "1 cup", oxalate: 3, category: "Fruit" },
+  { name: "Guava", serving: "1 medium", oxalate: 83, category: "Fruit" },
+  { name: "Kiwi, fresh", serving: "1 medium without skin", oxalate: 27, category: "Fruit" },
+  { name: "Kumquat", serving: "1 kumquat", oxalate: 1, category: "Fruit" },
+  { name: "Lemon, raw", serving: "1 slice", oxalate: 1, category: "Fruit" },
+  { name: "Lime, raw", serving: "1 lime", oxalate: 4, category: "Fruit" },
+  { name: "Lychee, fresh", serving: "1 cup", oxalate: 0, category: "Fruit" },
+  { name: "Mango, fresh", serving: "1 cup", oxalate: 7, category: "Fruit" },
+  { name: "Melons, watermelon, cantaloupe, honey dew", serving: "1 cup", oxalate: 2, category: "Fruit" },
+  { name: "Nectarines", serving: "2 medium", oxalate: 2, category: "Fruit" },
+  { name: "Olives, canned, black, pitted", serving: "6 medium", oxalate: 6, category: "Fruit" },
+  { name: "Olives, canned, green stuffed or unstuffed", serving: "6 medium", oxalate: 11, category: "Fruit" },
+  { name: "Orange, Mandarin/clementine, fresh or canned", serving: "1 medium or ½ cup", oxalate: 14, category: "Fruit" },
+  { name: "Oranges, (variety), fresh", serving: "1 medium", oxalate: 18, category: "Fruit" },
+  { name: "Papaya, raw", serving: "½ cup", oxalate: 1, category: "Fruit" },
+  { name: "Passion fruit", serving: "1 fruit", oxalate: 0, category: "Fruit" },
+  { name: "Peaches, raw or canned", serving: "1 small, or ½ cup", oxalate: 3, category: "Fruit" },
+  { name: "Pears, (variety), fresh or canned, baked", serving: "½ cup", oxalate: 4, category: "Fruit" },
+  { name: "Persimmons, Hachiya", serving: "1 medium", oxalate: 19, category: "Fruit" },
+  { name: "Persimmons, southern, wild, pulp", serving: "½ cup", oxalate: 13, category: "Fruit" },
+  { name: "Pineapple, fresh or canned", serving: "½ cup", oxalate: 7, category: "Fruit" },
+  { name: "Pineapple, preserved without sugar", serving: "¼ cup", oxalate: 2, category: "Fruit" },
+  { name: "Plums, (variety), fresh", serving: "1 medium", oxalate: 3, category: "Fruit" },
+  { name: "Pomegranate, seeds with juice", serving: "½ medium (4\" dia)", oxalate: 110, category: "Fruit" },
+  { name: "Prunes, pitted, Sunsweet brand", serving: "¼ cup", oxalate: 30, category: "Fruit" },
+  { name: "Rhubarb, raw", serving: "1 cup diced", oxalate: 1293, category: "Fruit" },
+  { name: "Rhubarb, stewed or canned", serving: "½ cup", oxalate: 799, category: "Fruit" },
+  { name: "Star fruit or Carambola, raw", serving: "1 medium", oxalate: 269, category: "Fruit" },
+  { name: "Tamarillo, raw", serving: "1 medium", oxalate: 20, category: "Fruit" },
+  { name: "Tangelo, raw", serving: "1 medium", oxalate: 79, category: "Fruit" },
+  { name: "Tangerine, raw", serving: "1 fruit", oxalate: 16, category: "Fruit" },
+
+  // ── Dairy ──
+  { name: "Dairy foods (butter, cheese, cow/goat milk, yogurt, sour cream, etc.)", serving: "varies", oxalate: 1, category: "Dairy" },
+  { name: "Milk, Almond (multi-brands) - not chocolate", serving: "1 cup", oxalate: 24, category: "Dairy" },
+  { name: "Milk, Cashew", serving: "1 cup", oxalate: 18, category: "Dairy" },
+  { name: "Milk, Coconut", serving: "1 cup", oxalate: 0, category: "Dairy" },
+  { name: "Milk, Flax", serving: "1 cup", oxalate: 0, category: "Dairy" },
+  { name: "Milk, Hazelnut", serving: "1 cup", oxalate: 12, category: "Dairy" },
+  { name: "Milk, Hemp", serving: "1 cup", oxalate: 5, category: "Dairy" },
+  { name: "Milk, Macadamia", serving: "1 cup", oxalate: 1, category: "Dairy" },
+  { name: "Milk, Oat", serving: "1 cup", oxalate: 11, category: "Dairy" },
+  { name: "Milk, Pea", serving: "1 cup", oxalate: 0, category: "Dairy" },
+  { name: "Milk, Rice", serving: "1 cup", oxalate: 7, category: "Dairy" },
+  { name: "Milk, Soy (variety) - not chocolate", serving: "1 cup", oxalate: 9, category: "Dairy" },
+  { name: "Milk, Soy, chocolate, Silk brand", serving: "1 cup", oxalate: 28, category: "Dairy" },
+  { name: "Yogurt, Almond", serving: "6 oz", oxalate: 66, category: "Dairy" },
+  { name: "Yogurt, Cashew, strawberry", serving: "6 oz", oxalate: 36, category: "Dairy" },
+  { name: "Yogurt, Coconut, mixed berry, Siggi's brand", serving: "6 oz", oxalate: 3, category: "Dairy" },
+  { name: "Yogurt, Coconut, So Delicious brand", serving: "6 oz", oxalate: 1, category: "Dairy" },
+  { name: "Yogurt, Coconut, strawberry", serving: "6 oz", oxalate: 1, category: "Dairy" },
+  { name: "Yogurt, Coconut, multiple brands", serving: "6 oz", oxalate: 2, category: "Dairy" },
+  { name: "Yogurt, Oat, strawberry, Oatly brand", serving: "6 oz", oxalate: 3, category: "Dairy" },
+  { name: "Yogurt, Soy, vanilla or strawberry", serving: "6 oz", oxalate: 5, category: "Dairy" },
+  { name: "Cheese, Soy", serving: "1 oz", oxalate: 16, category: "Dairy" },
+
+  // ── Grains ──
+  { name: "Bread, Bagel, White or whole grain", serving: "1 bagel", oxalate: 22, category: "Grains" },
+  { name: "Bread, Corn bread", serving: "1 2x2 slice", oxalate: 3, category: "Grains" },
+  { name: "Bread, Crumbs, Panko (original or Japanese style)", serving: "½ cup", oxalate: 8, category: "Grains" },
+  { name: "Bread, English muffin white or whole grain", serving: "1 muffin", oxalate: 13, category: "Grains" },
+  { name: "Bread, Hotdog/burger white or whole grain buns", serving: "1 bun", oxalate: 8, category: "Grains" },
+  { name: "Bread, Oat, whole", serving: "1 slice", oxalate: 6, category: "Grains" },
+  { name: "Bread, organic high content seeds and grains", serving: "1 slice", oxalate: 42, category: "Grains" },
+  { name: "Bread, Rye", serving: "1 slice", oxalate: 13, category: "Grains" },
+  { name: "Bread, Tortilla, corn yellow or white", serving: "2 small", oxalate: 10, category: "Grains" },
+  { name: "Bread, Tortilla, wheat or white or whole wheat", serving: "1 medium 8\"", oxalate: 17, category: "Grains" },
+  { name: "Bread, Wheat or White", serving: "1 slice", oxalate: 7, category: "Grains" },
+  { name: "Bread, 100% Whole wheat, whole grain", serving: "1 slice", oxalate: 13, category: "Grains" },
+  { name: "Corn, Corn meal", serving: "¼ cup", oxalate: 11, category: "Grains" },
+  { name: "Corn, Grits", serving: "½ cup", oxalate: 19, category: "Grains" },
+  { name: "Corn, Popcorn-popped", serving: "1 cup", oxalate: 4, category: "Grains" },
+  { name: "Egg replacer, Bob's Red Mill", serving: "1 tbsp", oxalate: 30, category: "Grains" },
+  { name: "Flour, Almond meal", serving: "¼ cup", oxalate: 197, category: "Grains" },
+  { name: "Flour, Amaranth", serving: "¼ cup", oxalate: 74, category: "Grains" },
+  { name: "Flour, Baking, gluten-free, Bob's Red Mill Brand", serving: "¼ cup", oxalate: 7, category: "Grains" },
+  { name: "Flour, Barley", serving: "¼ cup", oxalate: 14, category: "Grains" },
+  { name: "Flour, Buckwheat", serving: "¼ cup", oxalate: 84, category: "Grains" },
+  { name: "Flour, Cassava", serving: "¼ cup", oxalate: 19, category: "Grains" },
+  { name: "Flour, Chestnut", serving: "¼ cup", oxalate: 10, category: "Grains" },
+  { name: "Flour, Chickpea", serving: "¼ cup", oxalate: 2, category: "Grains" },
+  { name: "Flour, Coconut", serving: "¼ cup", oxalate: 2, category: "Grains" },
+  { name: "Flour, Cornmeal, yellow", serving: "¼ cup", oxalate: 10, category: "Grains" },
+  { name: "Flour, flaxseed meal or ground flax", serving: "¼ cup", oxalate: 2, category: "Grains" },
+  { name: "Flour, Oat", serving: "¼ cup", oxalate: 8, category: "Grains" },
+  { name: "Flour, potato starch, Bob's Red Mill brand", serving: "¼ cup", oxalate: 1, category: "Grains" },
+  { name: "Flour, Rice, white or brown", serving: "¼ cup", oxalate: 10, category: "Grains" },
+  { name: "Flour, Rye", serving: "¼ cup", oxalate: 12, category: "Grains" },
+  { name: "Flour, Semolina", serving: "¼ cup", oxalate: 19, category: "Grains" },
+  { name: "Flour, Sorghum, white", serving: "¼ cup", oxalate: 13, category: "Grains" },
+  { name: "Flour, Soy, Arrowhead Mills brand", serving: "¼ cup", oxalate: 28, category: "Grains" },
+  { name: "Flour, Spelt", serving: "¼ cup", oxalate: 20, category: "Grains" },
+  { name: "Flour, Tapioca", serving: "¼ cup", oxalate: 9, category: "Grains" },
+  { name: "Flour, Teff, Brown", serving: "¼ cup", oxalate: 75, category: "Grains" },
+  { name: "Flour, Teff, Ivory", serving: "¼ cup", oxalate: 66, category: "Grains" },
+  { name: "Flour, Tigernut", serving: "¼ cup", oxalate: 12, category: "Grains" },
+  { name: "Flour, Wheat gluten", serving: "¼ cup", oxalate: 19, category: "Grains" },
+  { name: "Flour, White or whole wheat", serving: "¼ cup", oxalate: 10, category: "Grains" },
+  { name: "Flour, Wild Rice", serving: "¼ cup", oxalate: 7, category: "Grains" },
+  { name: "Grain, Amaranth uncooked", serving: "¼ cup", oxalate: 28, category: "Grains" },
+  { name: "Grain, Barley, pearl, boiled", serving: "½ cup", oxalate: 9, category: "Grains" },
+  { name: "Grain, Bran, rice", serving: "¼ cup", oxalate: 60, category: "Grains" },
+  { name: "Grain, Bran, wheat", serving: "¼ cup", oxalate: 30, category: "Grains" },
+  { name: "Grain, Buckwheat groats, roasted", serving: "1 cup", oxalate: 133, category: "Grains" },
+  { name: "Grain, Farro, uncooked", serving: "¼ cup dry", oxalate: 5, category: "Grains" },
+  { name: "Grain, Oat bran", serving: "¼ cup", oxalate: 22, category: "Grains" },
+  { name: "Grain, Polenta, organic", serving: "¼ cup", oxalate: 3, category: "Grains" },
+  { name: "Grain, Quinoa boiled for 30 min", serving: "¼ cup dry", oxalate: 20, category: "Grains" },
+  { name: "Grain, Quinoa, cooked", serving: "½ cup cooked", oxalate: 55, category: "Grains" },
+  { name: "Grain, Seitan, wheat gluten", serving: "1 piece", oxalate: 15, category: "Grains" },
+  { name: "Grain, Wheat germ", serving: "¼ cup", oxalate: 24, category: "Grains" },
+  { name: "Grain, Wheat, bulger", serving: "1/4 cup dry", oxalate: 17, category: "Grains" },
+  { name: "Grain, Millet, boiled 30 min", serving: "½ cup", oxalate: 6, category: "Grains" },
+  { name: "Grain, Millet, dry, uncooked", serving: "¼ cup", oxalate: 10, category: "Grains" },
+  { name: "Grain, Rice, Black, cooked 30 min", serving: "½ cup", oxalate: 9, category: "Grains" },
+  { name: "Grain, Sorghum, cooked 70 min", serving: "½ cup", oxalate: 7, category: "Grains" },
+  { name: "Grain, Wheat berries, cooked 90 min", serving: "½ cup", oxalate: 18, category: "Grains" },
+  { name: "Pasta, Angel hair style, Miracle Noodles brand uncooked", serving: "3 oz", oxalate: 2, category: "Grains" },
+  { name: "Pasta, Rice Angel hair, DeBoles brand cooked 10 min", serving: "½ cup", oxalate: 9, category: "Grains" },
+  { name: "Pasta, couscous, boiled", serving: "½ cup", oxalate: 13, category: "Grains" },
+  { name: "Pasta, egg noodles, cooked", serving: "½ cup", oxalate: 10, category: "Grains" },
+  { name: "Pasta, elbow, brown rice, Tinkyada, cooked 17 min", serving: "2 cup", oxalate: 9, category: "Grains" },
+  { name: "Pasta, Fettuccine style, Miracle Noodles, uncooked", serving: "3 oz", oxalate: 2, category: "Grains" },
+  { name: "Pasta, Fettuccine, organic, spinach, cooked 10 min", serving: "1 cup", oxalate: 109, category: "Grains" },
+  { name: "Pasta, Kamut spirals, Eden brand, cooked 15 min", serving: "1 cup", oxalate: 24, category: "Grains" },
+  { name: "Pasta, Ribbons, Spelt, Eden brand, Cooked 11 min", serving: "1 cup", oxalate: 20, category: "Grains" },
+  { name: "Pasta, Rice", serving: "½ cup", oxalate: 7, category: "Grains" },
+  { name: "Pasta, Rye spirals, Whole grain, Eden", serving: "1 cup", oxalate: 18, category: "Grains" },
+  { name: "Pasta, Tri-color rotini, cooked 11 min", serving: "1 cup", oxalate: 52, category: "Grains" },
+  { name: "Pasta, veggie rotini, Hodgson Mill, cooked 13 min", serving: "1 cup cooked", oxalate: 56, category: "Grains" },
+  { name: "Pasta, Wheat, non-whole wheat varieties, cooked", serving: "1 cup", oxalate: 24, category: "Grains" },
+  { name: "Pasta, Wheat, whole wheat varieties, cooked", serving: "1 cup", oxalate: 31, category: "Grains" },
+  { name: "Rice, Brown variety, boiled", serving: "½ cup", oxalate: 5, category: "Grains" },
+  { name: "Rice, Long grain & wild, herb roasted, Uncle Ben's", serving: "½ cup", oxalate: 21, category: "Grains" },
+  { name: "Rice, Ready cooked, Uncle Ben's", serving: "½ cup", oxalate: 9, category: "Grains" },
+  { name: "Rice, White, variety, boiled", serving: "½ cup", oxalate: 1, category: "Grains" },
+  { name: "Rice, Wild, boiled", serving: "½ cup", oxalate: 8, category: "Grains" },
+
+  // ── Protein ──
+  { name: "Legumes, Beans, vegetarian, baked", serving: "½ cup", oxalate: 17, category: "Protein" },
+  { name: "Legumes, Beans, Anasazi, dried boiled, canned", serving: "½ cup", oxalate: 47, category: "Protein" },
+  { name: "Legumes, Beans, Black or turtle, dried boiled", serving: "½ cup", oxalate: 51, category: "Protein" },
+  { name: "Legumes, Beans, Blue, boiled", serving: "½ cup", oxalate: 15, category: "Protein" },
+  { name: "Legumes, Beans, Butter, boiled", serving: "½ cup", oxalate: 2, category: "Protein" },
+  { name: "Legumes, Beans, Cannellini", serving: "½ cup", oxalate: 79, category: "Protein" },
+  { name: "Legumes, Beans, Fava", serving: "½ cup", oxalate: 18, category: "Protein" },
+  { name: "Legumes, Beans, Flor de Mayo", serving: "½ cup", oxalate: 96, category: "Protein" },
+  { name: "Legumes, Beans, Garbanzo or chickpeas, dried boiled or canned", serving: "½ cup", oxalate: 9, category: "Protein" },
+  { name: "Legumes, Beans, Great northern, dried, boiled", serving: "½ cup", oxalate: 67, category: "Protein" },
+  { name: "Legumes, Beans, Kidney, Red, dried, boiled, canned", serving: "½ cup", oxalate: 22, category: "Protein" },
+  { name: "Legumes, Beans, Lima, dried boiled or canned", serving: "½ cup", oxalate: 3, category: "Protein" },
+  { name: "Legumes, Beans, Mung, dried, boiled", serving: "½ cup", oxalate: 5, category: "Protein" },
+  { name: "Legumes, Beans Navy, dried, boiled or canned", serving: "½ cup", oxalate: 53, category: "Protein" },
+  { name: "Legumes, Beans, October, boiled", serving: "½ cup", oxalate: 24, category: "Protein" },
+  { name: "Legumes, Beans, Pink, dried, boiled", serving: "½ cup", oxalate: 64, category: "Protein" },
+  { name: "Legumes, Beans, Pinto, dried, boiled", serving: "½ cup", oxalate: 29, category: "Protein" },
+  { name: "Legumes, Beans, Red, Chili, small, dried, boiled", serving: "½ cup", oxalate: 29, category: "Protein" },
+  { name: "Legumes, Beans, Red, small, dried, boiled", serving: "½ cup", oxalate: 28, category: "Protein" },
+  { name: "Legumes, Beans, Soy, dried, boiled", serving: "½ cup", oxalate: 39, category: "Protein" },
+  { name: "Legumes, Beans, soybean curd (Tofu)", serving: "½ cup", oxalate: 10, category: "Protein" },
+  { name: "Legumes, Beans, White, dried, boiled", serving: "½ cup", oxalate: 55, category: "Protein" },
+  { name: "Legumes, Edamame", serving: "½ cup", oxalate: 22, category: "Protein" },
+  { name: "Legumes, Lentils variety, dried, boiled, canned", serving: "½ cup", oxalate: 8, category: "Protein" },
+  { name: "Legumes, Peas, Black-eyed peas, canned", serving: "½ cup", oxalate: 3, category: "Protein" },
+  { name: "Legumes, Peas, Green peas, dried, boiled or canned", serving: "½ cup", oxalate: 2, category: "Protein" },
+  { name: "Legumes, peas, Green Pigeon Peas", serving: "½ cup", oxalate: 11, category: "Protein" },
+  { name: "Legumes, Peas, purple hull", serving: "½ cup", oxalate: 7, category: "Protein" },
+  { name: "Legumes, peas, split peas, yellow or green", serving: "½ cup", oxalate: 4, category: "Protein" },
+  { name: "Legumes, Peas, sugar snap", serving: "½ cup", oxalate: 26, category: "Protein" },
+  { name: "Legumes, Refried beans", serving: "½ cup", oxalate: 99, category: "Protein" },
+  { name: "Legumes, Tempeh", serving: "½ cup", oxalate: 40, category: "Protein" },
+  { name: "Legumes, Tempeh, organic, Lightlife brand", serving: "½ cup", oxalate: 50, category: "Protein" },
+  { name: "Nuts, Almond, raw or dry roasted", serving: "¼ cup", oxalate: 107, category: "Protein" },
+  { name: "Nuts, Brazil nuts, raw or roasted", serving: "¼ cup", oxalate: 52, category: "Protein" },
+  { name: "Nuts, Cashew Butter", serving: "2 tbsp", oxalate: 63, category: "Protein" },
+  { name: "Nuts, Cashew, raw or roasted", serving: "¼ cup", oxalate: 72, category: "Protein" },
+  { name: "Nuts, Chestnut, roasted", serving: "¼ cup", oxalate: 8, category: "Protein" },
+  { name: "Nuts, Coconut, dry, shredded", serving: "¼ cup", oxalate: 1, category: "Protein" },
+  { name: "Nuts, hazelnuts or filberts, raw", serving: "¼ cup", oxalate: 53, category: "Protein" },
+  { name: "Nuts, Macadamia, raw or dry roasted", serving: "¼ cup", oxalate: 13, category: "Protein" },
+  { name: "Nuts, Peanut Butter, creamy or chunky", serving: "2 tbsp", oxalate: 36, category: "Protein" },
+  { name: "Nuts, Peanuts, roasted", serving: "¼ cup", oxalate: 38, category: "Protein" },
+  { name: "Nuts, Pecans, raw or roasted", serving: "¼ cup", oxalate: 15, category: "Protein" },
+  { name: "Nuts, Pine, raw or roasted", serving: "¼ cup", oxalate: 54, category: "Protein" },
+  { name: "Nuts, Pistachio, raw or roasted", serving: "¼ cup", oxalate: 12, category: "Protein" },
+  { name: "Nuts, Soy nut butter", serving: "2 tbsp", oxalate: 11, category: "Protein" },
+  { name: "Nuts, Soynuts", serving: "¼ cup", oxalate: 24, category: "Protein" },
+  { name: "Nuts, Walnuts, raw or roasted", serving: "¼ cup", oxalate: 18, category: "Protein" },
+  { name: "Seeds, Chia, Bob's Red Mill", serving: "1 tbsp", oxalate: 61, category: "Protein" },
+  { name: "Seeds, Flax (linseed)", serving: "2 tbsp", oxalate: 2, category: "Protein" },
+  { name: "Seeds, hemp hearts", serving: "2 tbsp", oxalate: 11, category: "Protein" },
+  { name: "Seeds, Papaya", serving: "2 tbsp", oxalate: 31, category: "Protein" },
+  { name: "Seeds, Pumpkin seed butter", serving: "2 tbsp", oxalate: 2, category: "Protein" },
+  { name: "Seeds, Pumpkin, raw or roasted", serving: "2 tbsp", oxalate: 2, category: "Protein" },
+  { name: "Seeds, Saviseed (sacha inchi seeds)", serving: "¼ cup", oxalate: 72, category: "Protein" },
+  { name: "Seeds, Sunflower seed spread/butter", serving: "2 tbsp", oxalate: 6, category: "Protein" },
+  { name: "Seeds, Sunflower, raw or roasted", serving: "¼ cup", oxalate: 9, category: "Protein" },
+  { name: "Seeds, Wattle, roasted or ground", serving: "2 tbsp", oxalate: 21, category: "Protein" },
+  { name: "Sprouts, Pumpkin, raw", serving: "¼ cup", oxalate: 0, category: "Protein" },
+  { name: "Sprouts, watermelon, raw", serving: "¼ cup", oxalate: 1, category: "Protein" },
+  { name: "Textured Vegetable Protein (TVP)", serving: "½ cup", oxalate: 77, category: "Protein" },
+
+  // ── Beverages ──
+  { name: "Alcohol, Beer, regular, light, Hard Cider, seltzers", serving: "12 oz", oxalate: 2, category: "Beverages" },
+  { name: "Alcohol, Wine (white, red, rose, fortified)", serving: "4 oz", oxalate: 1, category: "Beverages" },
+  { name: "Alcohol, Distilled spirits (gin, rum, vodka, brandy, whiskey, liqueurs)", serving: "12 oz", oxalate: 0, category: "Beverages" },
+  { name: "Carnation Breakfast Essentials, Vanilla or Chocolate", serving: "1-8 oz bottle", oxalate: 3, category: "Beverages" },
+  { name: "Coconut water", serving: "1 cup", oxalate: 17, category: "Beverages" },
+  { name: "Coffee, Black", serving: "1 cup", oxalate: 2, category: "Beverages" },
+  { name: "Coffee drinks, Cappuccino, Latte, Mocha, Frappuccino", serving: "12 oz", oxalate: 13, category: "Beverages" },
+  { name: "Coffee, Instant, Black, Decaf", serving: "1 cup", oxalate: 2, category: "Beverages" },
+  { name: "Hot Chocolate, Dark chocolate mix", serving: "3 tbsp", oxalate: 66, category: "Beverages" },
+  { name: "Hot Chocolate, Milk chocolate or French Vanilla", serving: "3 tbsp", oxalate: 5, category: "Beverages" },
+  { name: "Juice, Apple", serving: "1 cup", oxalate: 1, category: "Beverages" },
+  { name: "Juice, Apricot Nectar", serving: "1 cup", oxalate: 11, category: "Beverages" },
+  { name: "Juice, Apricot", serving: "1 cup", oxalate: 5, category: "Beverages" },
+  { name: "Juice, Black Current", serving: "1 cup", oxalate: 3, category: "Beverages" },
+  { name: "Juice, Carrot", serving: "1 cup", oxalate: 23, category: "Beverages" },
+  { name: "Juice, Cherry", serving: "1 cup", oxalate: 3, category: "Beverages" },
+  { name: "Juice, Cranberry", serving: "1 cup", oxalate: 3, category: "Beverages" },
+  { name: "Juice, Grapefruit", serving: "1 cup", oxalate: 0, category: "Beverages" },
+  { name: "Juice, Grape, green", serving: "1 cup", oxalate: 3, category: "Beverages" },
+  { name: "Juice, Grape, Red", serving: "1 cup", oxalate: 5, category: "Beverages" },
+  { name: "Juice, Lemon", serving: "1 cup", oxalate: 1, category: "Beverages" },
+  { name: "Juice, Lime", serving: "1 cup", oxalate: 4, category: "Beverages" },
+  { name: "Juice, Mango", serving: "1 cup", oxalate: 1, category: "Beverages" },
+  { name: "Juice, Orange, with/without pulp", serving: "1 cup", oxalate: 1, category: "Beverages" },
+  { name: "Juice, Papaya, Nectar", serving: "1 cup", oxalate: 1, category: "Beverages" },
+  { name: "Juice, Pineapple", serving: "1 cup", oxalate: 2, category: "Beverages" },
+  { name: "Juice, Plum", serving: "1 cup", oxalate: 9, category: "Beverages" },
+  { name: "Juice, Pomegranate", serving: "1 cup", oxalate: 8, category: "Beverages" },
+  { name: "Juice, Red Current", serving: "1 cup", oxalate: 2, category: "Beverages" },
+  { name: "Juice, Rhubarb nectar", serving: "1 cup", oxalate: 496, category: "Beverages" },
+  { name: "Juice, Star Fruit, sour (homemade)", serving: "1 cup", oxalate: 1990, category: "Beverages" },
+  { name: "Juice, Tomato", serving: "1 cup", oxalate: 12, category: "Beverages" },
+  { name: "Juice, Vegetable (tomato, carrot, celery beets)", serving: "1 cup", oxalate: 23, category: "Beverages" },
+  { name: "Ovaltine, Powder", serving: "2 tbsp", oxalate: 6, category: "Beverages" },
+  { name: "Soda, with or without sugar/caffeine", serving: "1 cup", oxalate: 1, category: "Beverages" },
+  { name: "Tea, Green, multiple varieties", serving: "1 cup", oxalate: 21, category: "Beverages" },
+  { name: "Tea, Iced, multiple brands, brewed 10 min", serving: "1 cup", oxalate: 17, category: "Beverages" },
+  { name: "Tea, Iced ready to drink, diet or unsweetened", serving: "12 oz", oxalate: 10, category: "Beverages" },
+  { name: "Tea, Herbal", serving: "1 cup", oxalate: 14, category: "Beverages" },
+  { name: "Tea, Herbal, variety of flavors", serving: "1 cup", oxalate: 5, category: "Beverages" },
+  { name: "Tea, Instant Lemon-flavored powder, sweetened", serving: "4.5 tsp dry", oxalate: 1, category: "Beverages" },
+
+  // ── Sweets ──
+  { name: "Agave Nectar, light", serving: "1 tbsp", oxalate: 1, category: "Sweets" },
+  { name: "Artificial Sweeteners (Aspartame, Saccharin, Splenda, Swerve)", serving: "1 tsp", oxalate: 0, category: "Sweets" },
+  { name: "Candy, 3 Musketeers, Mars", serving: "1 bar", oxalate: 27, category: "Sweets" },
+  { name: "Candy, Dark Chocolate bar or chips", serving: "1 oz", oxalate: 65, category: "Sweets" },
+  { name: "Candy, M&M's, Milk chocolate", serving: "20 pcs", oxalate: 9, category: "Sweets" },
+  { name: "Candy, M&M's, peanut", serving: "10 pcs", oxalate: 11, category: "Sweets" },
+  { name: "Candy, Milk chocolate bar or chips", serving: "1 oz", oxalate: 32, category: "Sweets" },
+  { name: "Candy, Truffles, Dark chocolate, See's brand", serving: "1 piece", oxalate: 28, category: "Sweets" },
+  { name: "Candy, White Chocolate, bar or chips", serving: "1 oz", oxalate: 2, category: "Sweets" },
+  { name: "Chocolate Syrup", serving: "¼ cup", oxalate: 1, category: "Sweets" },
+  { name: "Cocoa/Cacao Powder, Dark chocolate, not Dutch process", serving: "2 tbsp", oxalate: 79, category: "Sweets" },
+  { name: "Cocoa Powder, Dutch Process w/alkali, Dark chocolate", serving: "2 tbsp", oxalate: 20, category: "Sweets" },
+  { name: "Fudge Brownie Mix, mix only", serving: "1 brownie 2x2", oxalate: 21, category: "Sweets" },
+  { name: "Honey, Clover, Madhava Mountain Gold", serving: "1 tbsp", oxalate: 1, category: "Sweets" },
+  { name: "Jelly, Jam, or preserves, Apricot", serving: "1 tbsp", oxalate: 2, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserves, Blueberry", serving: "1 tbsp", oxalate: 1, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserves, Fig", serving: "1 tbsp", oxalate: 2, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserves, Gooseberry", serving: "1 tbsp", oxalate: 6, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserves, Grape, Concord", serving: "1 tbsp", oxalate: 2, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserves, Orange Marmalade", serving: "1 tbsp", oxalate: 10, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserve, Red Plum", serving: "1 tbsp", oxalate: 2, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserve, Strawberry", serving: "1 tbsp", oxalate: 2, category: "Sweets" },
+  { name: "Jelly, Jam, or Preserve, Lingonberry Syrup", serving: "1 tbsp", oxalate: 0, category: "Sweets" },
+  { name: "Molasses, full flavor", serving: "1 tbsp", oxalate: 6, category: "Sweets" },
+  { name: "Stevia powder", serving: "1 pkt", oxalate: 0, category: "Sweets" },
+  { name: "Sugar, Brown", serving: "1 tsp", oxalate: 1, category: "Sweets" },
+  { name: "Sugar, Cane, White", serving: "1 tsp", oxalate: 0, category: "Sweets" },
+  { name: "Syrup, Barley Malt", serving: "1 tbsp", oxalate: 4, category: "Sweets" },
+  { name: "Syrup, Brown Rice", serving: "2 tbsp", oxalate: 4, category: "Sweets" },
+  { name: "Syrup, Elderberry", serving: "1 tbsp", oxalate: 1, category: "Sweets" },
+  { name: "Syrup, Maple, pure", serving: "1 tbsp", oxalate: 1, category: "Sweets" },
+  { name: "Syrup, Corn Syrup, Dark or Light", serving: "1 tbsp", oxalate: 0, category: "Sweets" },
+
+  // ── Condiments ──
+  { name: "Adobo (Mexican Adobo)", serving: "1 tsp", oxalate: 10, category: "Condiments" },
+  { name: "Barbecue Sauce", serving: "2 tbsp", oxalate: 2, category: "Condiments" },
+  { name: "Chiles, Green, chopped, Old El Paso", serving: "2 tbsp", oxalate: 4, category: "Condiments" },
+  { name: "Chutney, Major Grey's, Crosse & Blackwell", serving: "1 tbsp", oxalate: 6, category: "Condiments" },
+  { name: "Lawry's Seasoning Salt", serving: "1 tsp", oxalate: 2, category: "Condiments" },
+  { name: "Tabasco Pepper Sauce", serving: "2 tsp", oxalate: 1, category: "Condiments" },
+  { name: "Horseradish, extra hot", serving: "1 tsp", oxalate: 1, category: "Condiments" },
+  { name: "Ketchup", serving: "1 tbsp", oxalate: 1, category: "Condiments" },
+  { name: "Mayonnaise", serving: "1 tbsp", oxalate: 0, category: "Condiments" },
+  { name: "Mole Sauce (Mexican), Almond", serving: "2 tbsp", oxalate: 78, category: "Condiments" },
+  { name: "Mole Sauce (Mexican), Black", serving: "2 tbsp", oxalate: 4, category: "Condiments" },
+  { name: "Mole Sauce (Mexican), Green", serving: "2 tbsp", oxalate: 47, category: "Condiments" },
+  { name: "Mole Sauce (Mexican), Red", serving: "2 tbsp", oxalate: 103, category: "Condiments" },
+  { name: "Mustard, Dijon", serving: "1 tbsp", oxalate: 1, category: "Condiments" },
+  { name: "Mustard, Yellow, French's", serving: "1 tbsp", oxalate: 1, category: "Condiments" },
+  { name: "Pickles, Baby Kosher Dills, Vlasic", serving: "1 pickle", oxalate: 3, category: "Condiments" },
+  { name: "Salad Dressing, any flavor, multiple brand", serving: "2 tbsp", oxalate: 1, category: "Condiments" },
+  { name: "Soy Sauce, Kikkoman", serving: "1 tbsp", oxalate: 1, category: "Condiments" },
+  { name: "Steak Sauce, A-1, Kraft", serving: "1 tbsp", oxalate: 5, category: "Condiments" },
+  { name: "Tahini, made from dry roasted sesame seeds", serving: "1 tbsp", oxalate: 41, category: "Condiments" },
+  { name: "Vinegar, variety of flavors", serving: "1 tbsp", oxalate: 1, category: "Condiments" },
+  { name: "Worcester Sauce", serving: "1 tbsp", oxalate: 3, category: "Condiments" },
+
+  // ── Herbs & Spices ──
+  { name: "Allspice, McCormick", serving: "1 tsp", oxalate: 20, category: "Herbs & Spices" },
+  { name: "Almond extract", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Anise", serving: "1 tsp", oxalate: 20, category: "Herbs & Spices" },
+  { name: "Basil, Fresh", serving: "1 tsp", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Basil, sweet, fresh", serving: "¼ cup", oxalate: 10, category: "Herbs & Spices" },
+  { name: "Capers, Mezzetta", serving: "1 tbsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Cardamom", serving: "1 tsp", oxalate: 6, category: "Herbs & Spices" },
+  { name: "Celery Seeds, dried", serving: "1 tsp", oxalate: 32, category: "Herbs & Spices" },
+  { name: "Chili Powder", serving: "1 tsp", oxalate: 8, category: "Herbs & Spices" },
+  { name: "Chili, whole, green, fire roasted", serving: "1 chili", oxalate: 8, category: "Herbs & Spices" },
+  { name: "Chipotle Chili, Mexican whole", serving: "1 tsp", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Chives, fresh", serving: "¼ cup chopped", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Cilantro, fresh", serving: "¼ cup", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Cinnamon, ground", serving: "1 tsp", oxalate: 25, category: "Herbs & Spices" },
+  { name: "Cloves, dried, ground", serving: "1 tsp", oxalate: 42, category: "Herbs & Spices" },
+  { name: "Coating Mix Seasoned, Shake N Bake", serving: "1/8 pkt", oxalate: 4, category: "Herbs & Spices" },
+  { name: "Coriander seed, dried", serving: "1 tsp", oxalate: 19, category: "Herbs & Spices" },
+  { name: "Cumin Seed", serving: "1 tsp", oxalate: 23, category: "Herbs & Spices" },
+  { name: "Cumin, ground", serving: "1 tsp", oxalate: 21, category: "Herbs & Spices" },
+  { name: "Curry Powder", serving: "1 tsp", oxalate: 19, category: "Herbs & Spices" },
+  { name: "Dill, Fresh", serving: "1 tsp", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Fennel Seed, dried", serving: "1 tsp", oxalate: 23, category: "Herbs & Spices" },
+  { name: "Garlic powder", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Ginger, Crystallized, ground", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Ginger, Fresh", serving: "1 tsp", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Ginger, Ground", serving: "1 tsp", oxalate: 17, category: "Herbs & Spices" },
+  { name: "Italian Seasoning, dried", serving: "1 tsp", oxalate: 5, category: "Herbs & Spices" },
+  { name: "Lemon balm, leaves", serving: "¼ cup", oxalate: 5, category: "Herbs & Spices" },
+  { name: "Lemon Extract", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Lemon Myrtle", serving: "1 tsp", oxalate: 49, category: "Herbs & Spices" },
+  { name: "Lemon Peel", serving: "1 tsp", oxalate: 13, category: "Herbs & Spices" },
+  { name: "Mace", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Maple Flavoring, imitation", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Marjoram", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Mesquite Seasoning, dried, ground", serving: "1 tsp", oxalate: 4, category: "Herbs & Spices" },
+  { name: "Miso Paste, Red, Cold Mountain", serving: "1 tsp", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Mrs. Dash, seasoning blend", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Mustard, English, powdered", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Nutmeg, ground", serving: "1 tsp", oxalate: 5, category: "Herbs & Spices" },
+  { name: "Onion Powder", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Orange Extract, pure", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Orange Peel", serving: "1 tsp", oxalate: 13, category: "Herbs & Spices" },
+  { name: "Oregano, ground", serving: "1 tsp", oxalate: 8, category: "Herbs & Spices" },
+  { name: "Paprika", serving: "1 tsp", oxalate: 6, category: "Herbs & Spices" },
+  { name: "Parsley, dried", serving: "1 tsp", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Parsley, Raw, Leaves only", serving: "1 tbsp", oxalate: 4, category: "Herbs & Spices" },
+  { name: "Pasilla Chili", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Pepper, ground, black", serving: "1 tsp", oxalate: 12, category: "Herbs & Spices" },
+  { name: "Pepper, White", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Peppermint Leaves", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Poultry Seasoning, dried, ground", serving: "1 tsp", oxalate: 7, category: "Herbs & Spices" },
+  { name: "Rosemary, dried", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Rosemary, Fresh", serving: "1 tbsp", oxalate: 4, category: "Herbs & Spices" },
+  { name: "Saffron", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Sage, dried, ground", serving: "1 tsp", oxalate: 4, category: "Herbs & Spices" },
+  { name: "Sage, Leaves", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Savory, Fresh", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Savory, ground", serving: "1 tsp", oxalate: 8, category: "Herbs & Spices" },
+  { name: "Tarragon, ground", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Tarragon, Leaves", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Thyme, dried", serving: "1 tsp", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Tree Chili (chile de Arbol), whole", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Turmeric", serving: "1 tsp", oxalate: 46, category: "Herbs & Spices" },
+  { name: "Vanilla Extract, imitation", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Vanilla Extract, pure", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Mountain Pepper, dried, whole", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Mountain Pepper Leaf, dried, ground", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Pepper, Red, Cayenne", serving: "1 tsp", oxalate: 6, category: "Herbs & Spices" },
+  { name: "Pepper, Red, Cayenne, dried", serving: "5 peppers", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Pepper, Red, crushed", serving: "1 tsp", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Pepper, Cayenne, Raw", serving: "1 medium", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Pepper, Cayenne, with seeds sauteed 10 min", serving: "6 small peppers", oxalate: 4, category: "Herbs & Spices" },
+  { name: "Pepper, Habanera with seeds, sauteed 10 min", serving: "4 small peppers", oxalate: 2, category: "Herbs & Spices" },
+  { name: "Pepper, Jalapeno with seeds, sauteed 10 min", serving: "2 small peppers", oxalate: 10, category: "Herbs & Spices" },
+  { name: "Pepper, Lemon with seeds sauteed 10 min", serving: "5 small peppers", oxalate: 3, category: "Herbs & Spices" },
+  { name: "Peppers, New Mexican or Anaheim, raw", serving: "½ cup sliced", oxalate: 22, category: "Herbs & Spices" },
+  { name: "Pepper, Serrano with seeds sauteed 10 min", serving: "2 small peppers", oxalate: 5, category: "Herbs & Spices" },
+  { name: "Peppers, Tabasco with seeds, sauteed 10 min", serving: "2 small peppers", oxalate: 4, category: "Herbs & Spices" },
+  { name: "Salt, all varieties", serving: "1 tsp", oxalate: 0, category: "Herbs & Spices" },
+  { name: "Seeds, Caraway", serving: "1 tsp", oxalate: 18, category: "Herbs & Spices" },
+  { name: "Seeds, Mustard", serving: "1 tsp", oxalate: 1, category: "Herbs & Spices" },
+  { name: "Seeds, Poppy", serving: "1 tsp", oxalate: 45, category: "Herbs & Spices" },
+  { name: "Seeds, Sesame, toasted", serving: "1 tsp", oxalate: 6, category: "Herbs & Spices" },
+  { name: "Seeds, Sesame, whole dried", serving: "1 tsp", oxalate: 114, category: "Herbs & Spices" },
+  { name: "Seeds, Sesame, whole, dried, hulled", serving: "1 tsp", oxalate: 4, category: "Herbs & Spices" },
+
+  // ── Baking Items ──
+  { name: "Baking Powder", serving: "1 tsp", oxalate: 0, category: "Baking" },
+  { name: "Baking Soda", serving: "1 tsp", oxalate: 2, category: "Baking" },
+  { name: "Cake mixes, White or Angel Food, multiple brands", serving: "1 - 1/12 serving", oxalate: 1, category: "Baking" },
+  { name: "Cornstarch", serving: "1 tbsp", oxalate: 0, category: "Baking" },
+  { name: "Cream of Tartar", serving: "1 tsp", oxalate: 2, category: "Baking" },
+  { name: "Fruit Pectin, Sure-Jell", serving: "1 tsp", oxalate: 0, category: "Baking" },
+  { name: "Gelatin, Unflavored, Knox brand", serving: "1 tsp", oxalate: 0, category: "Baking" },
+  { name: "Malt Powder", serving: "1 tbsp", oxalate: 3, category: "Baking" },
+  { name: "Pie Crust, Multiple Brands", serving: "1/8 crust", oxalate: 5, category: "Baking" },
+  { name: "Pudding and Pie filling, instant, Jell-o, any flavor", serving: "½ cup prepared", oxalate: 12, category: "Baking" },
+  { name: "Yeast, active, dry", serving: "1 tbsp", oxalate: 7, category: "Baking" },
+
+  // ── Snack Foods ──
+  { name: "Bars, Apple and banana Fruit, Trader Joe's", serving: "1 bar", oxalate: 3, category: "Snacks" },
+  { name: "Bars, Banana Bread Flax, organic Go Raw", serving: "1 bar", oxalate: 4, category: "Snacks" },
+  { name: "Bars, Granola, Oats and Honey, Nature Valley", serving: "1 bar", oxalate: 6, category: "Snacks" },
+  { name: "Bars, Peanut butter, Crunchy, Clif", serving: "1 bar", oxalate: 72, category: "Snacks" },
+  { name: "Bars, Pumpkin, Live organic Go Raw", serving: "1 bar", oxalate: 2, category: "Snacks" },
+  { name: "Bars, Raspberry, organic, Lydia's Organics", serving: "1 bar", oxalate: 5, category: "Snacks" },
+  { name: "Bars, Rawma bar, Pumpkin, Gopal's Health foods", serving: "1 bar", oxalate: 21, category: "Snacks" },
+  { name: "Bars, Real Live, organic, Go Raw", serving: "1 bar", oxalate: 11, category: "Snacks" },
+  { name: "Bars, Snow Angell, organic, white chocolate coconut", serving: "1 bar", oxalate: 3, category: "Snacks" },
+  { name: "Basil Wraps, Blue Mountain organic, raw mix", serving: "1 cup", oxalate: 60, category: "Snacks" },
+  { name: "Breakfast Biscuits, any brand", serving: "1 biscuit", oxalate: 10, category: "Snacks" },
+  { name: "Breakfast sandwich, Jimmy Dean Eggwich, bacon, spinach, onion & parmesan", serving: "1 sandwich", oxalate: 88, category: "Snacks" },
+  { name: "Brownies, Entenmann's Little Bites", serving: "2 little brownies", oxalate: 23, category: "Snacks" },
+  { name: "Chips, Banana", serving: "13 pcs", oxalate: 61, category: "Snacks" },
+  { name: "Chips, Corn, Multiple brands", serving: "1 oz", oxalate: 9, category: "Snacks" },
+  { name: "Chips, Pistachio Crisps", serving: "1 oz (15 crisps)", oxalate: 9, category: "Snacks" },
+  { name: "Chips, Plantain, Inka Crops brand", serving: "1 oz", oxalate: 39, category: "Snacks" },
+  { name: "Chips, Popcorn Chips", serving: "20 chips", oxalate: 4, category: "Snacks" },
+  { name: "Chips, Potato Chips, Multiple Brands", serving: "1 oz", oxalate: 18, category: "Snacks" },
+  { name: "Chips, Sweet Potato Chips, Terra brand", serving: "1 oz", oxalate: 37, category: "Snacks" },
+  { name: "Chips, Tortilla Strips, Mission", serving: "1 oz", oxalate: 10, category: "Snacks" },
+  { name: "Cookies, Animal Crackers", serving: "12 cookies", oxalate: 2, category: "Snacks" },
+  { name: "Cookies, Chocolate Chip", serving: "5 small cookies", oxalate: 20, category: "Snacks" },
+  { name: "Cookies, Fig Newton's", serving: "1 cookie", oxalate: 5, category: "Snacks" },
+  { name: "Cookies, Milano, Double Chocolate, Pepperidge Farms", serving: "2 cookies", oxalate: 22, category: "Snacks" },
+  { name: "Cookies, Mint cookies, Milano, Pepperidge Farms", serving: "2 cookies", oxalate: 11, category: "Snacks" },
+  { name: "Cookies, Moravian, variety flavors", serving: "10 cookies", oxalate: 6, category: "Snacks" },
+  { name: "Cookies, Vanilla Wafer, Nabisco", serving: "8 cookies", oxalate: 7, category: "Snacks" },
+  { name: "Crackers, Buttercrisp, Keeblers", serving: "5 crackers", oxalate: 4, category: "Snacks" },
+  { name: "Crackers, Cheeze-it", serving: "27 crackers", oxalate: 6, category: "Snacks" },
+  { name: "Crackers, Chips, Toasted, Ritz, original", serving: "1 oz", oxalate: 6, category: "Snacks" },
+  { name: "Crackers, Graham, Original or Cinnamon, Keeblers", serving: "8 crackers", oxalate: 9, category: "Snacks" },
+  { name: "Crackers, Inner Peas, Trader Joe's", serving: "22 pcs", oxalate: 2, category: "Snacks" },
+  { name: "Crackers, Oyster", serving: "1 oz", oxalate: 6, category: "Snacks" },
+  { name: "Crackers, Ritz, Garlic butter", serving: "5 crackers", oxalate: 4, category: "Snacks" },
+  { name: "Crackers, Rye, Crispbreads, variety of flavors without sesame", serving: "1 oz", oxalate: 16, category: "Snacks" },
+  { name: "Crackers, Saltines, Multiple brands", serving: "5 crackers", oxalate: 5, category: "Snacks" },
+  { name: "Crackers, Sesame, Multiple Brands", serving: "1 oz", oxalate: 34, category: "Snacks" },
+  { name: "Crackers, Sesame Wheat Crackers, Sesmark Sesame Thins", serving: "8 crackers", oxalate: 115, category: "Snacks" },
+  { name: "Crackers, Soybean crackers", serving: "4 crackers", oxalate: 57, category: "Snacks" },
+  { name: "Crackers, Stone-ground 7 grain, Kashi", serving: "4 crackers", oxalate: 76, category: "Snacks" },
+  { name: "Crackers, Tomato Snacks, sun-dried", serving: "0.5 oz", oxalate: 6, category: "Snacks" },
+  { name: "Crackers, Wasabi peas, Trader Joe's", serving: "½ cup", oxalate: 1, category: "Snacks" },
+  { name: "Crackers, Wheat/Wheat thins, multiple brands/flavors", serving: "1 oz", oxalate: 13, category: "Snacks" },
+  { name: "Ice cream bar, original, Klondike", serving: "1 bar", oxalate: 9, category: "Snacks" },
+  { name: "Nutella", serving: "1 tbsp", oxalate: 13, category: "Snacks" },
+  { name: "Popcorn, dried corn, popped", serving: "1 cup", oxalate: 4, category: "Snacks" },
+  { name: "Pretzel Crisps, Snack Factory brand", serving: "14 crisps", oxalate: 1, category: "Snacks" },
+  { name: "Pretzels, Rold Gold, twists or sticks", serving: "1 serving", oxalate: 8, category: "Snacks" },
+  { name: "Rice Cakes/thins/snacks, Multiple brands and flavors", serving: "1 oz", oxalate: 9, category: "Snacks" },
+
+  // ── Cereals ──
+  { name: "40% Bran Flakes", serving: "1 cup", oxalate: 43, category: "Cereal" },
+  { name: "All Bran, Kellogg's", serving: "1 cup", oxalate: 103, category: "Cereal" },
+  { name: "Basic 4", serving: "1 cup", oxalate: 11, category: "Cereal" },
+  { name: "Bran Flakes", serving: "1 cup", oxalate: 51, category: "Cereal" },
+  { name: "Cap'N Crunch", serving: "1 cup", oxalate: 2, category: "Cereal" },
+  { name: "Cheerios", serving: "1 ½ cup", oxalate: 7, category: "Cereal" },
+  { name: "Cheerios, multigrain", serving: "1 1/3 cup", oxalate: 5, category: "Cereal" },
+  { name: "Cheerios, Honey Nut", serving: "1 cup", oxalate: 7, category: "Cereal" },
+  { name: "Cinnamon Toast Crunch", serving: "1 cup", oxalate: 7, category: "Cereal" },
+  { name: "Chex, Corn", serving: "1 ¼ cup", oxalate: 5, category: "Cereal" },
+  { name: "Chex, Rice", serving: "1 1/3 cup", oxalate: 4, category: "Cereal" },
+  { name: "Chex, Wheat, General Mills", serving: "1 cup", oxalate: 46, category: "Cereal" },
+  { name: "Cocoa Pebbles", serving: "1 cup", oxalate: 9, category: "Cereal" },
+  { name: "Cocoa Puffs", serving: "1 cup", oxalate: 6, category: "Cereal" },
+  { name: "Corn Flakes", serving: "1 ½ cup", oxalate: 1, category: "Cereal" },
+  { name: "Corn Pops", serving: "1 1/3 cup", oxalate: 1, category: "Cereal" },
+  { name: "Cracklin Oat Bran", serving: "¾ cup", oxalate: 12, category: "Cereal" },
+  { name: "Crispix", serving: "1 1/3 cup", oxalate: 2, category: "Cereal" },
+  { name: "Cream of Wheat, quick cook", serving: "1 cup", oxalate: 18, category: "Cereal" },
+  { name: "Fiber One, General Mills", serving: "1 cup", oxalate: 34, category: "Cereal" },
+  { name: "Fiber One Honey Clusters", serving: "1 cup", oxalate: 13, category: "Cereal" },
+  { name: "Fruit Loops", serving: "1 1/3 cup", oxalate: 4, category: "Cereal" },
+  { name: "Frosted Flakes", serving: "1 cup", oxalate: 1, category: "Cereal" },
+  { name: "Frosted Miniwheats", serving: "25 biscuits", oxalate: 33, category: "Cereal" },
+  { name: "Granola, oats, wheat and honey", serving: "2/3 cup", oxalate: 13, category: "Cereal" },
+  { name: "Grape Nuts", serving: "½ cup", oxalate: 14, category: "Cereal" },
+  { name: "Grape-Nuts Flakes, Post", serving: "1 cup", oxalate: 25, category: "Cereal" },
+  { name: "Great Grains Cranberry Almond Crunch", serving: "1 cup", oxalate: 28, category: "Cereal" },
+  { name: "Great Grains Crunchy Pecan", serving: "¾ cup", oxalate: 23, category: "Cereal" },
+  { name: "Great Grains, Raisin, Date, & Pecan", serving: "¾ cup", oxalate: 19, category: "Cereal" },
+  { name: "Honey Bunches of Oats w/ Almonds", serving: "1 cup", oxalate: 7, category: "Cereal" },
+  { name: "Honey Bunches of Oats, Honey Roasted", serving: "1 cup", oxalate: 4, category: "Cereal" },
+  { name: "Honey Toasted Oats, Kashi", serving: "1 cup", oxalate: 25, category: "Cereal" },
+  { name: "Kashi Autumn Wheat", serving: "32 biscuits", oxalate: 33, category: "Cereal" },
+  { name: "Kashi Go", serving: "¾ cup", oxalate: 11, category: "Cereal" },
+  { name: "Kashi Heart to Heart", serving: "1 cup", oxalate: 7, category: "Cereal" },
+  { name: "Lucky Charms", serving: "1 cup", oxalate: 6, category: "Cereal" },
+  { name: "Meuslix", serving: "1 cup", oxalate: 64, category: "Cereal" },
+  { name: "Millet, whole, cooked", serving: "½ cup", oxalate: 32, category: "Cereal" },
+  { name: "Oat Life", serving: "1 cup", oxalate: 4, category: "Cereal" },
+  { name: "Oatmeal Crisp Crunchy Almonds", serving: "1 cup", oxalate: 26, category: "Cereal" },
+  { name: "Oatmeal, Quaker, instant, sweetened", serving: "2/3 cup", oxalate: 0, category: "Cereal" },
+  { name: "Oatmeal, Quaker multigrain, cooked", serving: "1 cup", oxalate: 22, category: "Cereal" },
+  { name: "Oatmeal, regular, instant or regular, cooked", serving: "1 cup", oxalate: 0, category: "Cereal" },
+  { name: "Oatmeal Squares", serving: "1 cup", oxalate: 12, category: "Cereal" },
+  { name: "Puffed Rice", serving: "1 cup", oxalate: 2, category: "Cereal" },
+  { name: "Puffed Wheat", serving: "1 cup", oxalate: 9, category: "Cereal" },
+  { name: "Raisin Bran", serving: "1 cup", oxalate: 46, category: "Cereal" },
+  { name: "Reese's Puffs", serving: "1 cup", oxalate: 11, category: "Cereal" },
+  { name: "Rice Krispies", serving: "1 ½ cup", oxalate: 3, category: "Cereal" },
+  { name: "Shredded wheat, Post not mini", serving: "2 biscuits", oxalate: 41, category: "Cereal" },
+  { name: "Smart Start", serving: "1 ¼ cup", oxalate: 15, category: "Cereal" },
+  { name: "Special K", serving: "1 ¼ cup", oxalate: 7, category: "Cereal" },
+  { name: "Special K, Protein plus (low carb)", serving: "1 cup", oxalate: 62, category: "Cereal" },
+  { name: "Special K Red Berries", serving: "1 cup", oxalate: 8, category: "Cereal" },
+  { name: "Total, Whole Grain", serving: "1 cup", oxalate: 10, category: "Cereal" },
+  { name: "Uncle Sam", serving: "¾ cup", oxalate: 42, category: "Cereal" },
+  { name: "Weetabix", serving: "2 biscuits", oxalate: 31, category: "Cereal" },
+  { name: "Wheat Germ, Toasted plain", serving: "1 tbsp", oxalate: 1, category: "Cereal" },
+  { name: "Wheaties", serving: "1 cup", oxalate: 9, category: "Cereal" },
+
+  // ── Restaurant / Fast Food ──
+  { name: "Applebee's, Cajun Lime Tilapia, no vegetables", serving: "1 entree", oxalate: 24, category: "Restaurant" },
+  { name: "Applebee's, Garlic Herbed Chicken, no potatoes", serving: "1 entree", oxalate: 39, category: "Restaurant" },
+  { name: "Applebee's, Herbed potatoes", serving: "1 serving", oxalate: 22, category: "Restaurant" },
+  { name: "Applebee's, Italian Chicken & Portobello Sandwich, no fruit", serving: "1 entree", oxalate: 21, category: "Restaurant" },
+  { name: "Applebee's, Paradise Chicken Salad", serving: "1 entree", oxalate: 6, category: "Restaurant" },
+  { name: "Applebee's, Seasonal vegetables (broccoli and zucchini)", serving: "1 serving", oxalate: 5, category: "Restaurant" },
+  { name: "Applebee's, Steak & Portobellos", serving: "1 entree", oxalate: 34, category: "Restaurant" },
+  { name: "French Fries, Multiple Fast-Food restaurants", serving: "1 small serving", oxalate: 30, category: "Restaurant" },
+  { name: "McDonald's, Bacon, egg, and cheese biscuit", serving: "1 sandwich", oxalate: 17, category: "Restaurant" },
+  { name: "McDonald's, Egg McMuffin", serving: "1 sandwich", oxalate: 11, category: "Restaurant" },
+  { name: "McDonald's, Sausage Biscuit", serving: "1 biscuit", oxalate: 20, category: "Restaurant" },
+  { name: "McDonald's, Sausage McMuffin", serving: "1 sandwich", oxalate: 22, category: "Restaurant" },
+  { name: "Starbucks, Coffeecake classic", serving: "1 slice", oxalate: 13, category: "Restaurant" },
+  { name: "Starbucks, Latte, Dark chocolate Mocha, skim Milk", serving: "1 cup (8 oz)", oxalate: 45, category: "Restaurant" },
+  { name: "Starbucks, Latte, White chocolate Mocha", serving: "1 cup (8 oz)", oxalate: 10, category: "Restaurant" },
+  { name: "Wendy's, Caesar Salad, with or without croutons", serving: "1 side salad", oxalate: 3, category: "Restaurant" },
+  { name: "Wendy's, Chili", serving: "1 small chili", oxalate: 25, category: "Restaurant" },
+  { name: "Wendy's, Hamburger, junior, plain", serving: "1 burger", oxalate: 7, category: "Restaurant" },
+
+  // ── Prepared Foods ──
+  { name: "Frozen Meals, Lean Cuisine, All Chicken Entrees", serving: "1 entree", oxalate: 55, category: "Prepared Foods" },
+  { name: "Frozen meat substitute, Black Bean Patty, Morningstar Farm", serving: "1 burger", oxalate: 40, category: "Prepared Foods" },
+  { name: "Frozen meat substitute, Grillers, Morningstar Farms", serving: "1 burger", oxalate: 25, category: "Prepared Foods" },
+  { name: "Frozen meat substitute, Breakfast Patties, Boca brand", serving: "1 patty", oxalate: 30, category: "Prepared Foods" },
+  { name: "Frozen Meat substitute, Burger, Garden burger brand", serving: "1 patty", oxalate: 61, category: "Prepared Foods" },
+  { name: "Frozen meat substitute, Burgers, Boca Brand", serving: "1 patty", oxalate: 75, category: "Prepared Foods" },
+  { name: "Frozen meat substitute, Chicken Patties, Boca Brand", serving: "1 patty", oxalate: 26, category: "Prepared Foods" },
+  { name: "Pie Mix, pumpkin with spices, canned", serving: "½ cup", oxalate: 5, category: "Prepared Foods" },
+  { name: "Pizza crust, Boboli, Italian", serving: "½ of 8\" Shell", oxalate: 11, category: "Prepared Foods" },
+  { name: "Potato Flakes, cooked, Bob's Red Mill", serving: "1/3 cup", oxalate: 2, category: "Prepared Foods" },
+  { name: "Ravioli, Beef, overstuffed, Chef Boyardee", serving: "1 cup", oxalate: 31, category: "Prepared Foods" },
+  { name: "Ravioli, Beef, Regular, Chef Boyardee", serving: "1 cup", oxalate: 25, category: "Prepared Foods" },
+  { name: "Sauce, Pasta, Spicy Tomato & Basil, Classico", serving: "½ cup", oxalate: 9, category: "Prepared Foods" },
+  { name: "Sauce, Pasta/Marinara ready to serve", serving: "2 tbsp", oxalate: 3, category: "Prepared Foods" },
+  { name: "Sauce, Sloppy Joe, Manwich, Original", serving: "¼ cup", oxalate: 7, category: "Prepared Foods" },
+  { name: "Soup, 15 bean soup", serving: "1 cup", oxalate: 40, category: "Prepared Foods" },
+  { name: "Soup, Chili w/bean", serving: "1 cup", oxalate: 51, category: "Prepared Foods" },
+  { name: "Soup, Chili, no beans", serving: "1 cup", oxalate: 43, category: "Prepared Foods" },
+  { name: "Soup, Spicy Black Bean, and Kale", serving: "1 cup", oxalate: 29, category: "Prepared Foods" },
+  { name: "Soup, Sweet Potato", serving: "1 cup", oxalate: 40, category: "Prepared Foods" },
+  { name: "Soup, Vegetable Quinoa", serving: "1 cup", oxalate: 31, category: "Prepared Foods" },
+  { name: "Stuffing, Stove Top Stuffing, chicken, prepared", serving: "½ cup", oxalate: 10, category: "Prepared Foods" },
+
+  // ── Supplements ──
+  { name: "Algae, dried", serving: "1 oz", oxalate: 30, category: "Supplements" },
+  { name: "Aloe Vera Juice", serving: "1 cup", oxalate: 2, category: "Supplements" },
+  { name: "Ashwagandha, Oregon's Wild Harvest", serving: "3 capsules", oxalate: 13, category: "Supplements" },
+  { name: "Balance of Nature, Fiber and Spice", serving: "2 scoops", oxalate: 53, category: "Supplements" },
+  { name: "Balance of Nature, Fruits", serving: "3 capsules", oxalate: 2, category: "Supplements" },
+  { name: "Balance of Nature, vegetables", serving: "3 capsules", oxalate: 10, category: "Supplements" },
+  { name: "Barley Life, AIM", serving: "1 tsp", oxalate: 4, category: "Supplements" },
+  { name: "Beet Powder, Frontier Co-op", serving: "1 tbsp", oxalate: 100, category: "Supplements" },
+  { name: "Beet Supplement, Solaray and Nature's Way, average", serving: "1 capsule", oxalate: 4, category: "Supplements" },
+  { name: "Echinacea, Powder", serving: "1 tsp", oxalate: 2, category: "Supplements" },
+  { name: "Feverfew", serving: "1 tsp", oxalate: 4, category: "Supplements" },
+  { name: "Ginkgo Biloba", serving: "1 capsule", oxalate: 6, category: "Supplements" },
+  { name: "Goldenseal root, powder", serving: "1 tsp", oxalate: 3, category: "Supplements" },
+  { name: "Juice PLUS+, Garden Blend, veg", serving: "2 capsules", oxalate: 9, category: "Supplements" },
+  { name: "Juice PLUS+, Orchard Blend, fruit", serving: "2 capsules", oxalate: 4, category: "Supplements" },
+  { name: "Kelp powder", serving: "1 tsp", oxalate: 6, category: "Supplements" },
+  { name: "Metabolic, Thorne", serving: "2 scoops", oxalate: 23, category: "Supplements" },
+  { name: "Milk Thistle, seed", serving: "1 tsp", oxalate: 46, category: "Supplements" },
+  { name: "Milk Thistle, powder", serving: "1 tsp", oxalate: 90, category: "Supplements" },
+  { name: "Moringa, leaf powder, Genesis today", serving: "2 capsules", oxalate: 17, category: "Supplements" },
+  { name: "Multivitamin/Multimineral supplement, Centrum", serving: "2 tablets", oxalate: 5, category: "Supplements" },
+  { name: "Muscadine grape seed, Natures Pearls", serving: "1 capsule", oxalate: 6, category: "Supplements" },
+  { name: "Slippery Elm Bark", serving: "1 tsp", oxalate: 36, category: "Supplements" },
+  { name: "St. John's Wort", serving: "1 tsp", oxalate: 1, category: "Supplements" },
+  { name: "Turmeric Root Extract, Solgar", serving: "1 capsule", oxalate: 0, category: "Supplements" },
+  { name: "Valerian Root", serving: "2 capsules", oxalate: 2, category: "Supplements" },
+  { name: "Wheat Grass drink, Amazing Grass", serving: "1 pkt", oxalate: 8, category: "Supplements" },
+  { name: "Yeast, Nutritional", serving: "3 tbsp", oxalate: 3, category: "Supplements" },
+  { name: "Yellow Dock root, Nature's Way", serving: "2 capsules", oxalate: 9, category: "Supplements" },
+
+  // ── Nutritional Supplement Drinks ──
+  { name: "Boost Breeze, Orange", serving: "1 bottle (8oz)", oxalate: 33, category: "Supplements" },
+  { name: "Boost Breeze, Peach", serving: "1 bottle (8 oz)", oxalate: 26, category: "Supplements" },
+  { name: "Ensure, original, vanilla", serving: "1 bottle (8 oz)", oxalate: 2, category: "Supplements" },
+  { name: "Ensure Plus, vanilla", serving: "1 bottle (8oz)", oxalate: 12, category: "Supplements" },
+  { name: "Enteral Nutrition, Multiple brands, Chocolate Flavors", serving: "1 bottle (8 oz)", oxalate: 34, category: "Supplements" },
+  { name: "Enteral Nutrition multiple Brands, all other flavors/unflavored", serving: "1 bottle (8oz)", oxalate: 10, category: "Supplements" },
+];
+
+function getLevel(oxalate) {
+  if (oxalate >= 300) return { label: "Very High", cls: "very-high" };
+  if (oxalate >= 100) return { label: "High", cls: "high" };
+  if (oxalate >= 25)  return { label: "Moderate", cls: "moderate" };
+  return { label: "Low", cls: "low" };
+}
+
+const CATEGORIES = [...new Set(FOODS.map(f => f.category))].sort();
+let activeCategory = "All";
+
+// Build filter buttons
+const filtersEl = document.getElementById("filters");
+const allBtn = document.createElement("button");
+allBtn.className = "filter-btn active";
+allBtn.textContent = "All";
+allBtn.onclick = () => { activeCategory = "All"; updateFilters(); render(); };
+filtersEl.appendChild(allBtn);
+
+CATEGORIES.forEach(cat => {
+  const btn = document.createElement("button");
+  btn.className = "filter-btn";
+  btn.textContent = cat;
+  btn.onclick = () => { activeCategory = cat; updateFilters(); render(); };
+  filtersEl.appendChild(btn);
+});
+
+function updateFilters() {
+  filtersEl.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.textContent === activeCategory);
+  });
+}
+
+function highlight(text, query) {
+  if (!query) return text;
+  const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, "gi");
+  return text.replace(re, "<mark>$1</mark>");
+}
+
+function render() {
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
+  const resultsEl = document.getElementById("results");
+  const metaEl = document.getElementById("resultsMeta");
+
+  let filtered = FOODS;
+
+  if (activeCategory !== "All") {
+    filtered = filtered.filter(f => f.category === activeCategory);
+  }
+
+  if (query) {
+    filtered = filtered.filter(f =>
+      f.name.toLowerCase().includes(query) ||
+      f.category.toLowerCase().includes(query)
+    );
+    // Sort: exact start matches first, then by oxalate desc
+    filtered.sort((a, b) => {
+      const aStart = a.name.toLowerCase().startsWith(query) ? 0 : 1;
+      const bStart = b.name.toLowerCase().startsWith(query) ? 0 : 1;
+      return aStart - bStart || b.oxalate - a.oxalate;
+    });
+  } else {
+    // Default: show sorted by oxalate descending
+    filtered = [...filtered].sort((a, b) => b.oxalate - a.oxalate);
+  }
+
+  if (!query && activeCategory === "All") {
+    metaEl.textContent = `${FOODS.length} foods in database — start typing to search`;
+    resultsEl.innerHTML = `<div class="no-results"><span>🔍</span>Search any food to see its oxalate content</div>`;
+    return;
+  }
+
+  metaEl.textContent = `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`;
+
+  if (filtered.length === 0) {
+    resultsEl.innerHTML = `<div class="no-results"><span>😕</span>No results found for "${query}"</div>`;
+    return;
+  }
+
+  resultsEl.innerHTML = filtered.map(food => {
+    const lvl = getLevel(food.oxalate);
+    const displayName = highlight(food.name, query);
+    return `
+      <div class="card ${lvl.cls}">
+        <div class="card-left">
+          <div class="food-name">${displayName}</div>
+          <div class="food-meta">
+            <span class="category-badge">${food.category}</span>
+            ${food.serving}
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="oxalate-value">${food.oxalate} mg</div>
+          <div class="oxalate-label">${lvl.label}</div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+document.getElementById("searchInput").addEventListener("input", render);
+render();
+</script>
+</body>
+</html>
