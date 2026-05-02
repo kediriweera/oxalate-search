@@ -492,6 +492,17 @@
   .stat-pill.moderate  .stat-pill-value { color: var(--green); }
   .stat-pill.low       .stat-pill-value { color: var(--blue); }
 
+  .stat-pill[data-level] { cursor: pointer; transition: all 0.15s; }
+  .stat-pill[data-level]:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+
+  .stat-pill.very-high.active { background: var(--red);    border-color: var(--red);    color: white; }
+  .stat-pill.high.active      { background: var(--orange); border-color: var(--orange); color: white; }
+  .stat-pill.moderate.active  { background: var(--green);  border-color: var(--green);  color: white; }
+  .stat-pill.low.active       { background: var(--blue);   border-color: var(--blue);   color: white; }
+
+  .stat-pill.active .stat-pill-value,
+  .stat-pill.active .stat-pill-label { color: white; }
+
   /* ── Footer ── */
   .footer {
     text-align: center;
@@ -552,7 +563,7 @@
     <div class="results-meta" id="resultsMeta"></div>
     <div class="results" id="results"></div>
 
-    <footer class="footer">v1.1.2</footer>
+    <footer class="footer">v1.2.0</footer>
   </div>
 
 </div>
@@ -1290,6 +1301,8 @@ function getLevel(oxalate) {
 }
 
 // ── Build Stats Bar ──
+let activeLevelFilter = null;
+
 function buildStats() {
   const veryHigh = FOODS.filter(f => f.oxalate >= 300).length;
   const high     = FOODS.filter(f => f.oxalate >= 100 && f.oxalate < 300).length;
@@ -1307,23 +1320,37 @@ function buildStats() {
       <span class="stat-pill-value">${[...new Set(FOODS.map(f => f.category))].length}</span>
       <span class="stat-pill-label">Categories</span>
     </div>
-    <div class="stat-pill very-high" style="animation-delay:0.2s">
+    <div class="stat-pill very-high" data-level="very-high" style="animation-delay:0.2s">
       <span class="stat-pill-value">${veryHigh}</span>
       <span class="stat-pill-label">Very High</span>
     </div>
-    <div class="stat-pill high" style="animation-delay:0.25s">
+    <div class="stat-pill high" data-level="high" style="animation-delay:0.25s">
       <span class="stat-pill-value">${high}</span>
       <span class="stat-pill-label">High</span>
     </div>
-    <div class="stat-pill moderate" style="animation-delay:0.3s">
+    <div class="stat-pill moderate" data-level="moderate" style="animation-delay:0.3s">
       <span class="stat-pill-value">${moderate}</span>
       <span class="stat-pill-label">Moderate</span>
     </div>
-    <div class="stat-pill low" style="animation-delay:0.35s">
+    <div class="stat-pill low" data-level="low" style="animation-delay:0.35s">
       <span class="stat-pill-value">${low}</span>
       <span class="stat-pill-label">Low</span>
     </div>
   `;
+
+  // Wire up clicks on level pills
+  document.querySelectorAll(".stat-pill[data-level]").forEach(pill => {
+    pill.addEventListener("click", () => {
+      const lvl = pill.dataset.level;
+      // Toggle off if already active
+      activeLevelFilter = activeLevelFilter === lvl ? null : lvl;
+      // Update active styles
+      document.querySelectorAll(".stat-pill[data-level]").forEach(p =>
+        p.classList.toggle("active", p.dataset.level === activeLevelFilter)
+      );
+      render();
+    });
+  });
 }
 buildStats();
 
@@ -1397,6 +1424,10 @@ function render() {
     filtered = filtered.filter(f => f.category === activeCategory);
   }
 
+  if (activeLevelFilter) {
+    filtered = filtered.filter(f => getLevel(f.oxalate).cls === activeLevelFilter);
+  }
+
   if (query) {
     filtered = filtered.filter(f =>
       f.name.toLowerCase().includes(query) ||
@@ -1413,9 +1444,9 @@ function render() {
     filtered = [...filtered].sort((a, b) => b.oxalate - a.oxalate);
   }
 
-  if (!query && activeCategory === "All") {
+  if (!query && activeCategory === "All" && !activeLevelFilter) {
     metaEl.textContent = `${FOODS.length} foods in database — start typing to search`;
-    resultsEl.innerHTML = `<div class="no-results"><span class="icon">🔍</span>Search any food to see its oxalate content</div>`;
+    resultsEl.innerHTML = `<div class="no-results"><span class="icon">🔍</span>Search any food or click a level above to filter</div>`;
     return;
   }
 
